@@ -656,12 +656,17 @@ function prefetchPistonVersions(){
   fetch('https://emkc.org/api/v2/piston/runtimes')
     .then(r=>r.json())
     .then(list=>{
-      const py = list.find(r=>r.language==='python');
-      const jv = list.find(r=>r.language==='java');
-      if(py) state.pistonVersions.python = py.version;
-      if(jv) state.pistonVersions.java = jv.version;
+      if(Array.isArray(list)){
+        const py = list.find(r=>r.language==='python');
+        const jv = list.find(r=>r.language==='java');
+        if(py) state.pistonVersions.python = py.version;
+        if(jv) state.pistonVersions.java = jv.version;
+      }
     })
-    .catch(()=>{ /* fall back to defaults set at call time */ });
+    .catch(()=>{
+      state.pistonVersions.python = '*';
+      state.pistonVersions.java = '*';
+    });
 }
 
 /* =========================================================================
@@ -887,13 +892,18 @@ async function runCodeTests(track, code, tests){
         })
       });
       const data = await resp.json();
-      if(data.compile && data.compile.code !== 0){
+      if(data.compile && data.compile.code !== undefined && data.compile.code !== 0){
         actual = 'Compile error:\n' + (data.compile.stderr || data.compile.output || 'unknown error');
       } else if(data.run){
-        actual = (data.run.stdout || '').trim();
-        if(data.run.stderr && !actual){ actual = 'Runtime error:\n' + data.run.stderr.trim(); }
+        if(data.run.code !== 0 && data.run.stderr && !data.run.stdout){
+          actual = 'Runtime error:\n' + data.run.stderr.trim();
+        } else {
+          actual = (data.run.stdout || data.run.output || '').trim();
+        }
         const expected = t.output.trim();
         status = normalizeOutput(actual) === normalizeOutput(expected) ? 'pass' : 'fail';
+      } else if (data.message) {
+        actual = 'Execution error: ' + data.message;
       }
     } catch(e){
       actual = 'Execution failed: ' + e.message;
@@ -1130,8 +1140,17 @@ async function showFinalResults(timedOut){
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ emplId: employeeId, skillName: track.name, skillLevels: skillLevel })
     });
+
+    // 3. Fallback/instant local save for dashboard
+    const localAssessments = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
+    localAssessments.unshift({ assessmentId: Date.now(), employeeId, technology: track.name, score: pct, date: today });
+    localStorage.setItem("bb_assessments", JSON.stringify(localAssessments));
   } catch (err) {
     console.warn("[BenchBridge] Backend update error:", err.message);
+    const skillLevel = pct >= 80 ? "Expert" : pct >= 60 ? "Intermediate" : "Beginner";
+    const localAssessments = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
+    localAssessments.unshift({ assessmentId: Date.now(), employeeId, technology: track.name, score: pct, date: today });
+    localStorage.setItem("bb_assessments", JSON.stringify(localAssessments));
   }
 
   document.getElementById('assessment').classList.remove('active');

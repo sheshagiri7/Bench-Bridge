@@ -165,8 +165,9 @@ const API = {
             `${API_BASE}/api/assessments?employeeId=${employeeId}`,
             { headers: authHeaders() },
             async () => {
-                await delay(450);
-                return MOCK_ASSESSMENTS;
+                await delay(350);
+                const local = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
+                return local.length > 0 ? local : MOCK_ASSESSMENTS;
             }
         );
     },
