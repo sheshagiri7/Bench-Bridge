@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BenchBridge | Main Dashboard</title>
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div>
+                <h1>Enterprise Resource Dashboard</h1>
+                <p>Overview of workforce metrics, bench availability, and assessment top performers.</p>
+            </div>
+        </header>
+
+        <!-- ================= METRIC CARDS ================= -->
+        <section class="cards-grid">
+            
+            <!-- Total Employees -->
+            <div class="card card-blue active-card" id="cardTotal" onclick="filterData('all')">
+                <div class="card-header">
+                    <span>Total Employees</span>
+                    <div class="card-icon blue"><i class="fa-solid fa-users"></i></div>
+                </div>
+                <div class="card-body">
+                    <h2 id="totalCount">0</h2>
+                    <span class="badge blue-badge">All Records</span>
+                </div>
+                <p class="card-footer">Overall workforce count</p>
+            </div>
+
+            <!-- Bench Employees -->
+            <div class="card card-amber" id="cardBench" onclick="filterData('bench')">
+                <div class="card-header">
+                    <span>Bench Employees</span>
+                    <div class="card-icon amber"><i class="fa-solid fa-user-clock"></i></div>
+                </div>
+                <div class="card-body">
+                    <h2 id="benchCount">0</h2>
+                    <span class="badge amber-badge">Available</span>
+                </div>
+                <p class="card-footer">Awaiting project allocation</p>
+            </div>
+
+            <!-- Higher Score Employees -->
+            <div class="card card-green" id="cardHigh" onclick="filterData('high')">
+                <div class="card-header">
+                    <span>Higher Score Employees</span>
+                    <div class="card-icon green"><i class="fa-solid fa-trophy"></i></div>
+                </div>
+                <div class="card-body">
+                    <h2 id="highScoreCount">0</h2>
+                    <span class="badge green-badge">Score &ge; 85%</span>
+                </div>
+                <p class="card-footer">Top performers from AI assessment</p>
+            </div>
+
+        </section>
+
+        <!-- ================= EMPLOYEE LIST TABLE ================= -->
+        <section class="table-card">
+            
+            <div class="table-header">
+                <div>
+                    <h2 id="tableTitle">All Employees</h2>
+                    <p id="tableSubtitle">Showing all registered employees</p>
+                </div>
+                
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search by name, department, skill..." onkeyup="handleSearch()">
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="employee-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Employee Name</th>
+                            <th>Department</th>
+                            <th>Primary Skill</th>
+                            <th>Assessment Score</th>
+                            <th>Bench Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

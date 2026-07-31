@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BenchBridge | Manager Workspace</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+    <!-- Dashboard Styles -->
+    <link rel="stylesheet" href="css/employee-dashboard.css" />
+    <link rel="stylesheet" href="css/manager-dashboard.css" />
+</head>
+
+<body>
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <img src="images/logo.png" alt="BenchBridge logo" />
+            </div>
+            <div class="logo-text">
+                <h2>BenchBridge</h2>
+                <span>Manager Workspace</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Dashboard Navigation">
+            <p class="nav-label">Management</p>
+
+            <button class="nav-item active" data-section="overview">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Workforce Overview</span>
+            </button>
+
+            <button class="nav-item" data-section="resources">
+                <i class="fa-solid fa-users"></i>
+                <span>Bench Resources</span>
+            </button>
+
+            <button class="nav-item" data-section="projects">
+                <i class="fa-solid fa-briefcase"></i>
+                <span>Project Openings</span>
+            </button>
+
+            <button class="nav-item" data-section="allocations">
+                <i class="fa-solid fa-network-wired"></i>
+                <span>Allocation Requests</span>
+            </button>
+
+            <button class="nav-item" data-section="team">
+                <i class="fa-solid fa-people-group"></i>
+                <span>My Team</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="login.html" class="logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ================= MAIN ================= -->
+    <div class="main">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="topbar-title">
+                <h1 id="pageTitle">Workforce Overview</h1>
+                <p id="pageSubtitle">Real-time resource utilization and bench metrics.</p>
+            </div>
+
+            <div class="topbar-actions">
+                <div class="user-chip">
+                    <div class="user-avatar" id="topAvatar">M</div>
+                    <div class="user-info">
+                        <strong id="topName">Team Manager</strong>
+                        <span id="topEmpId">MGR0001</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic content -->
+        <main class="content">
+
+            <!-- ========== WORKFORCE OVERVIEW ========== -->
+            <section class="dashboard-section active" id="section-overview">
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon blue"><i class="fa-solid fa-users"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Total Workforce</span>
+                            <h3 id="statTotalEmployees">0</h3>
+                            <span class="kpi-sub positive"><i class="fa-solid fa-arrow-up"></i> Active Talent</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon warning"><i class="fa-solid fa-user-clock"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">On Bench</span>
+                            <h3 id="statBenchCount">0</h3>
+                            <span class="kpi-sub warning">Available for projects</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon success"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Utilization Rate</span>
+                            <h3 id="statUtilization">0%</h3>
+                            <span class="kpi-sub positive">Allocated workforce</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon purple"><i class="fa-solid fa-rocket"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Open Projects</span>
+                            <h3 id="statOpenProjects">0</h3>
+                            <span class="kpi-sub">Positions needing talent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overview-split">
+                    <div class="glass-card flex-1">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-fire text-blue"></i> High Match Candidates</h3>
+                            <span>AI Recommended</span>
+                        </div>
+                        <div id="overviewMatchesContainer">
+                            <div class="placeholder-text">Loading candidate recommendations…</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card flex-1">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-chart-bar text-cyan"></i> Bench Skill Breakdown</h3>
+                            <span>Distribution</span>
+                        </div>
+                        <div id="overviewSkillsContainer">
+                            <div class="placeholder-text">Analyzing bench skills…</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== BENCH RESOURCES ========== -->
+            <section class="dashboard-section" id="section-resources">
+                <div class="section-header">
+                    <div>
+                        <h2>Bench Resources Directory</h2>
+                        <p>Search, filter, and manage employee allocations.</p>
+                    </div>
+                    <div class="filter-controls">
+                        <div class="search-box" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;">
+                            <i class="fa-solid fa-magnifying-glass" style="color:#64748b;font-size:13px;"></i>
+                            <input type="text" id="resourceSearch" placeholder="Search employees…" style="background:transparent;border:none;outline:none;color:#f1f5f9;font-size:13px;width:170px;" />
+                        </div>
+                        <select id="departmentFilter" class="glass-select">
+                            <option value="ALL">All Departments</option>
+                            <option value="AI &amp; Data Science">AI &amp; Data Science</option>
+                            <option value="Full Stack Engineering">Full Stack Engineering</option>
+                            <option value="DevOps &amp; Cloud">DevOps &amp; Cloud</option>
+                        </select>
+                        <select id="statusFilter" class="glass-select">
+                            <option value="ALL">All Statuses</option>
+                            <option value="On Bench">On Bench</option>
+                            <option value="Allocated">Allocated</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="resourcesTableContainer" class="glass-card overflow-x">
+                    <div class="placeholder-text">Loading employee directory…</div>
+                </div>
+            </section>
+
+            <!-- ========== PROJECT OPENINGS ========== -->
+            <section class="dashboard-section" id="section-projects">
+                <div class="section-header">
+                    <div>
+                        <h2>Active Project Openings</h2>
+                        <p>Manage required skills and open staffing roles.</p>
+                    </div>
+                    <button class="ghost-btn" type="button" id="newProjectBtn">
+                        <i class="fa-solid fa-plus"></i> Post New Project
+                    </button>
+                </div>
+
+                <div id="managerProjectsContainer" class="projects-grid">
+                    <div class="placeholder-text">Loading projects…</div>
+                </div>
+            </section>
+
+            <!-- ========== ALLOCATION REQUESTS ========== -->
+            <section class="dashboard-section" id="section-allocations">
+                <div class="section-header">
+                    <div>
+                        <h2>Allocation Requests</h2>
+                        <p>Review project applications submitted by bench employees.</p>
+                    </div>
+                </div>
+
+                <div id="allocationsContainer" class="glass-card">
+                    <div class="placeholder-text">Loading allocation requests…</div>
+                </div>
+            </section>
+
+            <!-- ========== MY TEAM ========== -->
+            <section class="dashboard-section" id="section-team">
+                <div class="section-header">
+                    <div>
+                        <h2>My Team</h2>
+                        <p>All employees you have approved and allocated to projects.</p>
+                    </div>
+                </div>
+
+                <div id="teamContainer" class="glass-card">
+                    <div class="placeholder-text">Loading team…</div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ================= MODAL: POST PROJECT ================= -->
+    <div class="modal-overlay" id="projectModal">
+        <div class="glass-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-plus text-blue"></i> Post New Project</h3>
+                <button class="close-modal-btn" id="closeProjectModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="projectForm" class="modal-form">
+                <div class="form-group">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" required placeholder="e.g. Core Banking AI Engine" />
+                </div>
+                <div class="form-group">
+                    <label for="projectDomain">Domain</label>
+                    <input type="text" id="projectDomain" required placeholder="e.g. FinTech, Cloud" />
+                </div>
+                <div class="form-group">
+                    <label for="requiredSkills">Required Skills (Comma separated)</label>
+                    <input type="text" id="requiredSkills" required placeholder="e.g. Java, Spring Boot, React, Docker" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="ghost-btn" id="cancelProjectBtn">Cancel</button>
+                    <button type="submit" class="submit-btn">Create Project Posting</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/manager-dashboard.js"></script>
+</body>
+</html>

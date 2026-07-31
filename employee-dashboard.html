@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BenchBridge | Employee Dashboard</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+    <!-- Dashboard Styles -->
+    <link rel="stylesheet" href="css/employee-dashboard.css" />
+</head>
+
+<body>
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-logo">
+
+            <div class="logo-icon">
+                <img src="images/logo.png" alt="BenchBridge logo" />
+            </div>
+
+            <div class="logo-text">
+                <h2>BenchBridge</h2>
+                <span>Employee Dashboard</span>
+            </div>
+
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Dashboard Navigation">
+
+            <p class="nav-label">Menu</p>
+
+            <button class="nav-item active" data-section="profile">
+                <i class="fa-solid fa-user"></i>
+                <span>My Profile</span>
+            </button>
+
+            <button class="nav-item" data-section="assessments">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <span>Assessments</span>
+            </button>
+
+            <button class="nav-item" data-section="analysis">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Assessment Analysis</span>
+            </button>
+
+            <button class="nav-item" data-section="projects">
+                <i class="fa-solid fa-rocket"></i>
+                <span>Recommended Projects</span>
+            </button>
+
+            <button class="nav-item" data-section="myproject" id="myProjectNavBtn" style="display:none;">
+                <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>
+                <span>My Project</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="login.html" class="logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ================= MAIN ================= -->
+    <div class="main">
+
+        <!-- Topbar -->
+        <header class="topbar">
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="topbar-title">
+                <h1 id="pageTitle">My Profile</h1>
+                <p id="pageSubtitle">Welcome back, let's see how you're doing.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <div class="user-chip">
+                    <div class="user-avatar" id="topAvatar">—</div>
+                    <div class="user-info">
+                        <strong id="topName">Loading…</strong>
+                        <span id="topEmpId">Fetching profile…</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- Dynamic content -->
+        <main class="content">
+
+            <!-- ========== MY PROFILE ========== -->
+            <section class="dashboard-section active" id="section-profile">
+                <div class="section-grid" id="profileContainer">
+                    <div class="placeholder-text">Loading profile…</div>
+                </div>
+            </section>
+
+            <!-- ========== ASSESSMENTS ========== -->
+            <section class="dashboard-section" id="section-assessments">
+                <div class="section-header">
+                    <div>
+                        <h2>Assessments</h2>
+                        <p>Your recent technical assessment results.</p>
+                    </div>
+                    <button class="ghost-btn" type="button" id="newAssessmentBtn">
+                        <i class="fa-solid fa-plus"></i> New Assessment
+                    </button>
+                </div>
+                <div id="assessmentsContainer">
+                    <div class="placeholder-text">Loading assessments…</div>
+                </div>
+            </section>
+
+            <!-- ========== ASSESSMENT ANALYSIS ========== -->
+            <section class="dashboard-section" id="section-analysis">
+                <div class="section-header">
+                    <div>
+                        <h2>Assessment Analysis</h2>
+                        <p>Insights derived from your assessment results.</p>
+                    </div>
+                </div>
+                <div id="analysisContainer">
+                    <div class="placeholder-text">Analyzing results…</div>
+                </div>
+            </section>
+
+            <!-- ========== RECOMMENDED PROJECTS ========== -->
+            <section class="dashboard-section" id="section-projects">
+                <div class="section-header">
+                    <div>
+                        <h2>Recommended Projects</h2>
+                        <p>AI-matched projects based on your skills and scores.</p>
+                    </div>
+                </div>
+                <div id="projectsContainer">
+                    <div class="placeholder-text">Matching projects…</div>
+                </div>
+            </section>
+
+            <!-- ========== MY PROJECT (Approval Banner) ========== -->
+            <section class="dashboard-section" id="section-myproject">
+                <div id="myProjectContainer">
+                    <div class="placeholder-text">Loading project status…</div>
+                </div>
+            </section>
+
+        </main>
+
+    <!-- ================= MODAL: TAKE ASSESSMENT ================= -->
+    <div class="modal-overlay" id="assessmentModal">
+        <div class="glass-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-clipboard-check text-blue"></i> Start Technical Assessment</h3>
+                <button class="close-modal-btn" id="closeAssessmentModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="assessmentForm" class="modal-form">
+                <div class="form-group">
+                    <label for="assessTechnology">Select Technology Track</label>
+                    <select id="assessTechnology" class="glass-select" style="width: 100%; padding: 10px; border-radius: 10px;" required>
+                        <option value="Java">Java</option>
+                        <option value="DSA">Data Structures & Algorithms (DSA)</option>
+                        <option value="Python">Python</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="ghost-btn" id="cancelAssessmentBtn">Cancel</button>
+                    <button type="submit" class="submit-btn">Start Test</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: ADD SKILL MANUALLY ================= -->
+    <div class="modal-overlay" id="skillModal">
+        <div class="glass-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-code text-blue"></i> Add Skill</h3>
+                <button class="close-modal-btn" id="closeSkillModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="skillForm" class="modal-form">
+                <div class="form-group">
+                    <label for="skillSelect">Select Skill</label>
+                    <select id="skillSelect" class="glass-select" style="width: 100%; padding: 10px; border-radius: 10px;" required>
+                        <option value="Java">Java</option>
+                        <option value="DSA">DSA (Data Structures & Algorithms)</option>
+                        <option value="Python">Python</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="skillLevelSelect">Proficiency Level</label>
+                    <select id="skillLevelSelect" class="glass-select" style="width: 100%; padding: 10px; border-radius: 10px;" required>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate" selected>Intermediate</option>
+                        <option value="Expert">Expert</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="ghost-btn" id="cancelSkillBtn">Cancel</button>
+                    <button type="submit" class="submit-btn">Add Skill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/employee-dashboard.js"></script>
+</body>
+</html>

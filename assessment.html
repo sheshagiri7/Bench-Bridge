@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BenchBridge — Technical Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E14;
+    --panel:#12161F;
+    --panel-2:#171C27;
+    --border:#242A38;
+    --border-soft:#1B2029;
+    --text:#E7E9F1;
+    --text-dim:#8B92A8;
+    --text-faint:#565D72;
+    --accent:#5B8DEF;
+    --accent-dim:#2E3F63;
+    --success:#35D08C;
+    --success-dim:#173327;
+    --danger:#FF5C6C;
+    --danger-dim:#3A1E22;
+    --amber:#FFB020;
+    --java:#E8A33D;
+    --python:#5B9CE8;
+    --sql:#B07CE8;
+    --radius:10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  code, .mono, textarea.editor, .test-io{font-family:'JetBrains Mono',monospace;}
+  button{font-family:'Inter',sans-serif; cursor:pointer; border:none;}
+  ::selection{background:var(--accent-dim); color:#fff;}
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:6px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
+
+  /* ---------- Screens ---------- */
+  .screen{display:none; min-height:100vh;}
+  .screen.active{display:block;}
+  #assessment.active{display:flex; height:100vh; overflow:hidden;}
+
+  /* ---------- LANDING SCREEN ---------- */
+  #landing{
+    display:flex; flex-direction:column; align-items:center;
+    padding:64px 24px 80px;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(91,141,239,0.14), transparent 60%),
+      var(--bg);
+  }
+  .landing-inner{width:100%; max-width:920px;}
+  .eyebrow{
+    display:flex; align-items:center; gap:10px;
+    color:var(--text-faint); font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    font-weight:600; margin-bottom:18px;
+  }
+  .eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px var(--accent-dim);}
+  .landing-title{font-size:40px; line-height:1.15; font-weight:700; letter-spacing:-0.02em; margin-bottom:14px;}
+  .landing-sub{color:var(--text-dim); font-size:15.5px; max-width:560px; line-height:1.6; margin-bottom:44px;}
+
+  .rules-strip{
+    display:flex; gap:28px; flex-wrap:wrap;
+    padding:18px 22px; border:1px solid var(--border-soft); border-radius:var(--radius);
+    background:var(--panel); margin-bottom:48px;
+  }
+  .rule-item{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--text-dim);}
+  .rule-item b{color:var(--text); font-weight:600;}
+  .rule-icon{width:28px; height:28px; border-radius:7px; background:var(--panel-2); border:1px solid var(--border-soft);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--accent); font-size:14px;}
+
+  .track-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media(max-width:820px){.track-grid{grid-template-columns:1fr;}}
+
+  .track-card{
+    position:relative; background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:14px; padding:26px 22px 22px; text-align:left; overflow:hidden;
+    transition:border-color .18s ease, transform .18s ease;
+  }
+  .track-card:hover{border-color:var(--card-color, var(--accent)); transform:translateY(-3px);}
+  .track-card::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--card-color, var(--accent));
+  }
+  .track-badge{
+    width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--card-color) 16%, transparent);
+    color:var(--card-color); font-family:'JetBrains Mono',monospace; font-weight:600; font-size:15px;
+    margin-bottom:18px; border:1px solid color-mix(in srgb, var(--card-color) 35%, transparent);
+  }
+  .track-name{font-size:19px; font-weight:600; margin-bottom:6px; letter-spacing:-0.01em;}
+  .track-desc{font-size:13px; color:var(--text-dim); line-height:1.55; margin-bottom:20px; min-height:40px;}
+  .track-meta{display:flex; gap:14px; font-size:11.5px; color:var(--text-faint); margin-bottom:20px; text-transform:uppercase; letter-spacing:.04em;}
+  .track-meta span{display:flex; align-items:center; gap:5px;}
+  .track-start{
+    width:100%; padding:11px 0; border-radius:8px; background:var(--panel-2); color:var(--text);
+    font-weight:600; font-size:13.5px; border:1px solid var(--border); transition:all .15s ease;
+  }
+  .track-card:hover .track-start{background:var(--card-color); color:#0B0E14; border-color:var(--card-color);}
+
+  .landing-footer{margin-top:40px; text-align:center; color:var(--text-faint); font-size:12px;}
+
+  /* ---------- ASSESSMENT SCREEN ---------- */
+  #assessment{display:none; flex-direction:column; height:100vh;}
+  #assessment.active{display:flex;}
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 22px; height:56px; flex-shrink:0;
+    background:var(--panel); border-bottom:1px solid var(--border-soft);
+  }
+  .topbar-left{display:flex; align-items:center; gap:14px;}
+  .brand{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px;}
+  .brand-dot{width:8px; height:8px; border-radius:2px; background:var(--accent);}
+  .topic-pill{
+    display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:6px;
+    background:var(--panel-2); border:1px solid var(--border-soft); font-size:12px; color:var(--text-dim); font-weight:600;
+  }
+  .topic-pill .swatch{width:8px; height:8px; border-radius:2px; background:var(--card-color);}
+
+  .timer-box{
+    display:flex; align-items:center; gap:10px; padding:6px 14px; border-radius:8px;
+    background:var(--panel-2); border:1px solid var(--border-soft);
+  }
+  .timer-box.low{border-color:var(--danger); background:var(--danger-dim);}
+  .timer-label{font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.08em; font-weight:600;}
+  .timer-val{font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:600; letter-spacing:.02em;}
+  .timer-box.low .timer-val{color:var(--danger);}
+
+  .topbar-right{display:flex; align-items:center; gap:12px;}
+  .btn-submit-all{
+    padding:9px 18px; border-radius:7px; background:var(--accent); color:#fff; font-weight:600; font-size:13px;
+  }
+  .btn-submit-all:hover{filter:brightness(1.08);}
+
+  .assess-body{flex:1; display:flex; min-height:0;}
+
+  /* sidebar */
+  .qsidebar{
+    width:230px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--border-soft);
+    padding:18px 14px; overflow-y:auto;
+  }
+  .qsidebar-title{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--text-faint); font-weight:700; margin:0 6px 12px;}
+  .qnav-item{
+    display:flex; align-items:center; gap:10px; padding:11px 10px; border-radius:8px; margin-bottom:6px;
+    color:var(--text-dim); font-size:13px; font-weight:500; transition:background .12s ease;
+  }
+  .qnav-item:hover{background:var(--panel-2);}
+  .qnav-item.active{background:var(--accent-dim); color:var(--text);}
+  .qnav-status{width:18px; height:18px; border-radius:5px; border:1.5px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px;}
+  .qnav-status.passed{background:var(--success-dim); border-color:var(--success); color:var(--success);}
+  .qnav-status.attempted{background:var(--danger-dim); border-color:var(--danger); color:var(--danger);}
+  .qnav-num{opacity:.8;}
+
+  .sidebar-divider{height:1px; background:var(--border-soft); margin:16px 6px;}
+  .score-summary{padding:4px 6px; font-size:12px; color:var(--text-dim);}
+  .score-summary b{color:var(--text); font-size:20px; font-family:'Space Grotesk',sans-serif; display:block; margin-bottom:2px;}
+
+  /* main split */
+  .assess-main{flex:1; display:flex; min-width:0;}
+  .question-pane{
+    width:44%; flex-shrink:0; overflow-y:auto; padding:26px 28px 60px;
+    border-right:1px solid var(--border-soft);
+  }
+  .q-head{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .q-difficulty{
+    font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    padding:3px 9px; border-radius:5px; background:var(--danger-dim); color:var(--danger); border:1px solid rgba(255,92,108,.3);
+  }
+  .q-index{font-size:12px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;}
+  .q-title{font-size:21px; font-weight:700; margin-bottom:16px; letter-spacing:-0.01em;}
+  .q-desc{font-size:14px; line-height:1.75; color:var(--text-dim); margin-bottom:22px; white-space:pre-line;}
+  .q-desc b, .q-desc strong{color:var(--text); font-weight:600;}
+
+  .q-section-title{font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-faint); font-weight:700; margin:22px 0 10px;}
+  .example-block{
+    background:var(--panel); border:1px solid var(--border-soft); border-radius:8px; padding:14px 16px; margin-bottom:10px;
+  }
+  .example-block .ex-label{font-size:11px; color:var(--text-faint); font-weight:600; margin-bottom:6px; text-transform:uppercase;}
+  .example-block pre{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text); white-space:pre-wrap; word-break:break-word; line-height:1.6;}
+  .constraints-list{font-size:12.5px; color:var(--text-dim); line-height:1.9; padding-left:18px;}
+  .constraints-list code{background:var(--panel-2); padding:1px 5px; border-radius:4px; font-size:11.5px;}
+
+  /* editor pane */
+  .editor-pane{flex:1; display:flex; flex-direction:column; min-width:0;}
+  .editor-toolbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 18px; border-bottom:1px solid var(--border-soft); background:var(--panel);
+  }
+  .lang-tag{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-dim); font-weight:600;}
+  .lang-tag .swatch{width:9px; height:9px; border-radius:3px; background:var(--card-color);}
+  .toolbar-actions{display:flex; gap:8px;}
+  .btn{
+    padding:7px 14px; border-radius:7px; font-size:12.5px; font-weight:600;
+    background:var(--panel-2); color:var(--text-dim); border:1px solid var(--border-soft); transition:all .12s ease;
+  }
+  .btn:hover{color:var(--text); border-color:var(--text-faint);}
+  .btn.primary{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .btn.primary:hover{filter:brightness(1.1);}
+  .btn.success{background:var(--success); color:#0B0E14; border-color:var(--success);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn .spinner{display:inline-block; width:11px; height:11px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin-right:6px; vertical-align:-1px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  textarea.editor{
+    flex:1; width:100%; background:#0D1119; color:#DCE1EE; border:none; outline:none; resize:none;
+    padding:18px 20px; font-size:13.5px; line-height:1.65; tab-size:4;
+  }
+
+  .results-panel{
+    height:230px; flex-shrink:0; border-top:1px solid var(--border-soft); background:var(--panel);
+    display:flex; flex-direction:column;
+  }
+  .results-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 18px; border-bottom:1px solid var(--border-soft);
+  }
+  .results-title{font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-faint); font-weight:700;}
+  .results-verdict{font-size:12px; font-weight:600;}
+  .results-body{flex:1; overflow-y:auto; padding:12px 18px;}
+  .results-empty{color:var(--text-faint); font-size:13px; padding:20px 0; text-align:center;}
+
+  .tc-row{
+    border:1px solid var(--border-soft); border-radius:8px; margin-bottom:8px; overflow:hidden;
+  }
+  .tc-head{display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--panel-2); font-size:12.5px; font-weight:600;}
+  .tc-status-icon{width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0;}
+  .tc-status-icon.pass{background:var(--success-dim); color:var(--success);}
+  .tc-status-icon.fail{background:var(--danger-dim); color:var(--danger);}
+  .tc-status-icon.pending{background:var(--panel); border:1px dashed var(--border); color:var(--text-faint);}
+  .tc-lock{margin-left:auto; color:var(--text-faint); font-size:11px; display:flex; align-items:center; gap:4px;}
+  .tc-detail{padding:10px 12px; font-size:12px; display:none;}
+  .tc-detail.show{display:block;}
+  .tc-io-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;}
+  .tc-io-block .tc-io-label{color:var(--text-faint); font-size:10.5px; text-transform:uppercase; margin-bottom:4px; letter-spacing:.05em;}
+  .test-io{background:#0D1119; border:1px solid var(--border-soft); border-radius:6px; padding:8px 10px; font-size:12px; color:var(--text-dim); white-space:pre-wrap; word-break:break-word; max-height:90px; overflow-y:auto;}
+
+  /* ---------- RESULTS SCREEN ---------- */
+  #resultsScreen{display:none; align-items:center; justify-content:center; min-height:100vh; padding:40px 20px;}
+  #resultsScreen.active{display:flex;}
+  .results-card{width:100%; max-width:640px; background:var(--panel); border:1px solid var(--border-soft); border-radius:16px; padding:44px 40px;}
+  .results-card .icon{width:56px; height:56px; border-radius:14px; background:var(--success-dim); border:1px solid rgba(53,208,140,.35); display:flex; align-items:center; justify-content:center; font-size:26px; color:var(--success); margin-bottom:22px;}
+  .results-card h2{font-size:24px; margin-bottom:8px;}
+  .results-card p.sub{color:var(--text-dim); font-size:14px; margin-bottom:28px;}
+  .score-big{display:flex; align-items:baseline; gap:8px; margin-bottom:6px;}
+  .score-big .num{font-family:'Space Grotesk',sans-serif; font-size:48px; font-weight:700;}
+  .score-big .denom{font-size:18px; color:var(--text-faint);}
+  .score-bar{height:8px; border-radius:5px; background:var(--panel-2); overflow:hidden; margin-bottom:28px;}
+  .score-bar-fill{height:100%; background:var(--success); border-radius:5px; transition:width .6s ease;}
+  .breakdown-row{display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:1px solid var(--border-soft); font-size:13.5px;}
+  .breakdown-row:last-of-type{border-bottom:1px solid var(--border-soft);}
+  .breakdown-q{color:var(--text-dim);}
+  .breakdown-tag{font-size:11px; font-weight:700; padding:3px 9px; border-radius:5px;}
+  .breakdown-tag.full{background:var(--success-dim); color:var(--success);}
+  .breakdown-tag.partial{background:rgba(255,176,32,.14); color:var(--amber);}
+  .breakdown-tag.zero{background:var(--danger-dim); color:var(--danger);}
+  .results-actions{margin-top:28px; display:flex; gap:10px;}
+
+  .banner{
+    display:none; align-items:center; gap:10px; padding:12px 16px; border-radius:8px;
+    background:rgba(255,176,32,.1); border:1px solid rgba(255,176,32,.3); color:var(--amber); font-size:13px; margin-bottom:18px;
+  }
+  .banner.show{display:flex;}
+
+  @media(max-width:900px){
+    .qsidebar{display:none;}
+    .assess-main{flex-direction:column;}
+    .question-pane, .editor-pane{width:100%;}
+    .question-pane{max-height:38vh; border-right:none; border-bottom:1px solid var(--border-soft);}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= ASSESSMENT SCREEN ================= -->
+<div class="screen active" id="assessment">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand"><span class="brand-dot"></span>BenchBridge</div>
+      <div class="topic-pill" id="topicPill"><span class="swatch"></span><span id="topicPillText"></span></div>
+    </div>
+    <div class="timer-box" id="timerBox">
+      <span class="timer-label">Time Left</span>
+      <span class="timer-val" id="timerVal">60:00</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-submit-all" id="finishBtn">Submit Assessment</button>
+    </div>
+  </div>
+
+  <div class="assess-body">
+    <div class="qsidebar">
+      <div class="qsidebar-title">Questions</div>
+      <div id="qnavList"></div>
+      <div class="sidebar-divider"></div>
+      <div class="score-summary">
+        <b id="sidebarScore">0 / 9</b>
+        test cases passed
+      </div>
+    </div>
+
+    <div class="assess-main">
+      <div class="question-pane" id="questionPane"></div>
+
+      <div class="editor-pane">
+        <div class="editor-toolbar">
+          <div class="lang-tag"><span class="swatch"></span><span id="langTagText"></span></div>
+          <div class="toolbar-actions">
+            <button class="btn" id="resetBtn">Reset</button>
+            <button class="btn" id="runBtn">▶ Run Tests</button>
+            <button class="btn success" id="submitBtn">Submit Question</button>
+          </div>
+        </div>
+        <textarea class="editor" id="editor" spellcheck="false"></textarea>
+
+        <div class="results-panel">
+          <div class="results-header">
+            <span class="results-title">Test Results</span>
+            <span class="results-verdict" id="resultsVerdict"></span>
+          </div>
+          <div class="results-body" id="resultsBody">
+            <div class="results-empty">Run your code to see test case results here.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FINAL RESULTS SCREEN ================= -->
+<div class="screen" id="resultsScreen">
+  <div class="results-card">
+    <div class="icon">✓</div>
+    <h2>Assessment Submitted</h2>
+    <p class="sub" id="resultsSub">Here's how you did on the track.</p>
+    <div class="score-big"><span class="num" id="finalScoreNum">0</span><span class="denom">/ 9 test cases passed</span></div>
+    <div class="score-bar"><div class="score-bar-fill" id="finalScoreBar" style="width:0%"></div></div>
+    <div id="finalBreakdown"></div>
+    <div class="results-actions">
+      <button class="btn primary" id="restartBtn" style="flex:1; padding:12px;">Return to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script>
+/* =========================================================================
+   QUESTION DATA
+   ========================================================================= */
+const TRACKS = {
+  java: {
+    key:'java', name:'Java', color:'var(--java)', short:'JV',
+    desc:'JVM fundamentals, collections, and algorithmic problem solving.',
+    piston:{ language:'java', version:null },
+    questions:[
+      {
+        title:'Longest Palindromic Substring',
+        desc:`Given a string \`s\`, print the longest palindromic substring contained in it.
+
+If more than one substring of the maximum length exists, print the one that starts first (leftmost).
+
+Read the string from standard input (single line) and print only the answer.`,
+        constraints:['1 ≤ length of s ≤ 1000','s consists of lowercase English letters only'],
+        starter:`import java.util.Scanner;
+
+public class Solution {
+    static String longestPalindrome(String s) {
+        // TODO: implement
+        return "";
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        String s = sc.nextLine();
+        System.out.println(longestPalindrome(s));
+    }
+}`,
+        tests:[
+          {input:'cbbd\n', output:'bb', hidden:false},
+          {input:'forgeeksskeegfor\n', output:'geeksskeeg', hidden:false},
+          {input:'aaaa\n', output:'aaaa', hidden:true}
+        ]
+      },
+      {
+        title:'Merge Intervals',
+        desc:`Given a list of intervals, merge all overlapping intervals and print the result sorted by start value.
+
+**Input format:** first line contains \`n\`, followed by \`n\` lines each with two integers \`start end\`.
+**Output format:** one merged interval per line, formatted as \`start end\`.
+
+Two intervals are considered overlapping if one's start is ≤ the other's end.`,
+        constraints:['1 ≤ n ≤ 1000','0 ≤ start ≤ end ≤ 10^6'],
+        starter:`import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = Integer.parseInt(sc.nextLine().trim());
+        int[][] intervals = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            String[] parts = sc.nextLine().trim().split("\\\\s+");
+            intervals[i][0] = Integer.parseInt(parts[0]);
+            intervals[i][1] = Integer.parseInt(parts[1]);
+        }
+        // TODO: merge intervals and print, one per line as "start end"
+    }
+}`,
+        tests:[
+          {input:'4\n1 3\n2 6\n8 10\n15 18\n', output:'1 6\n8 10\n15 18', hidden:false},
+          {input:'3\n1 4\n4 5\n7 9\n', output:'1 5\n7 9', hidden:false},
+          {input:'5\n1 4\n0 4\n3 5\n6 8\n7 10\n', output:'0 5\n6 10', hidden:true}
+        ]
+      },
+      {
+        title:'Detect Cycle in a Directed Graph',
+        desc:`Given a directed graph with \`n\` nodes (labelled 0 to n-1) and \`m\` edges, print \`YES\` if the graph contains a cycle, otherwise print \`NO\`.
+
+**Input format:** first line contains \`n m\`, followed by \`m\` lines each with two integers \`u v\` meaning a directed edge from u to v.`,
+        constraints:['1 ≤ n ≤ 1000','0 ≤ m ≤ 5000','0 ≤ u, v < n'],
+        starter:`import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        String[] first = sc.nextLine().trim().split("\\\\s+");
+        int n = Integer.parseInt(first[0]);
+        int m = Integer.parseInt(first[1]);
+        List<List<Integer>> adj = new ArrayList<>();
+        for (int i = 0; i < n; i++) adj.add(new ArrayList<>());
+        for (int i = 0; i < m; i++) {
+            String[] parts = sc.nextLine().trim().split("\\\\s+");
+            int u = Integer.parseInt(parts[0]);
+            int v = Integer.parseInt(parts[1]);
+            adj.get(u).add(v);
+        }
+        // TODO: detect cycle and print YES or NO
+    }
+}`,
+        tests:[
+          {input:'4 4\n0 1\n1 2\n2 3\n3 1\n', output:'YES', hidden:false},
+          {input:'4 3\n0 1\n1 2\n2 3\n', output:'NO', hidden:false},
+          {input:'5 5\n0 1\n1 2\n2 0\n3 4\n4 3\n', output:'YES', hidden:true}
+        ]
+      }
+    ]
+  },
+
+  dsa: {
+    key:'dsa', name:'DSA', color:'var(--amber)', short:'DSA',
+    desc:'Data Structures & Algorithms: trees, graphs, and dynamic programming.',
+    piston:{ language:'python', version:null },
+    questions:[
+      {
+        title:'Median of Two Sorted Arrays',
+        desc:`Given two sorted integer arrays of size \`n\` and \`m\`, print the median of the combined array.
+
+**Input format:** line 1: \`n m\`, line 2: n integers (array 1, sorted), line 3: m integers (array 2, sorted).
+**Output format:** the median, printed as a float with exactly one decimal place (e.g. \`2.5\` or \`2.0\`).`,
+        constraints:['1 ≤ n, m ≤ 1000','arrays are already sorted ascending'],
+        starter:`def find_median(a, b):
+    # TODO: implement
+    pass
+
+n, m = map(int, input().split())
+a = list(map(int, input().split()))
+b = list(map(int, input().split()))
+print(find_median(a, b))`,
+        tests:[
+          {input:'2 2\n1 3\n2 4\n', output:'2.5', hidden:false},
+          {input:'1 2\n10\n1 2\n', output:'2.0', hidden:false},
+          {input:'3 3\n1 3 5\n2 4 6\n', output:'3.5', hidden:true}
+        ]
+      },
+      {
+        title:'Longest Increasing Subsequence',
+        desc:`Given an array of \`n\` integers, print the length of the longest strictly increasing subsequence.
+
+**Input format:** line 1: \`n\`, line 2: n integers.
+**Output format:** a single integer.`,
+        constraints:['1 ≤ n ≤ 2000','-10^9 ≤ value ≤ 10^9'],
+        starter:`def lis_length(arr):
+    # TODO: implement
+    pass
+
+n = int(input())
+arr = list(map(int, input().split()))
+print(lis_length(arr))`,
+        tests:[
+          {input:'8\n10 9 2 5 3 7 101 18\n', output:'4', hidden:false},
+          {input:'6\n7 7 7 7 7 7\n', output:'1', hidden:false},
+          {input:'6\n1 3 6 7 9 4\n', output:'5', hidden:true}
+        ]
+      },
+      {
+        title:'Word Break',
+        desc:`Given a string \`s\` and a dictionary of \`k\` words, print \`True\` if \`s\` can be segmented into a space-separated sequence of one or more dictionary words, otherwise print \`False\`.
+
+**Input format:** line 1: string s, line 2: integer k, line 3: k space-separated dictionary words.
+
+Dictionary words may be reused any number of times.`,
+        constraints:['1 ≤ length of s ≤ 300','1 ≤ k ≤ 1000'],
+        starter:`def word_break(s, word_dict):
+    # TODO: implement
+    pass
+
+s = input().strip()
+k = int(input())
+words = input().split()
+print(word_break(s, set(words)))`,
+        tests:[
+          {input:'leetcode\n2\nleet code\n', output:'True', hidden:false},
+          {input:'catsandog\n5\ncats dog sand and cat\n', output:'False', hidden:false},
+          {input:'applepenapple\n2\napple pen\n', output:'True', hidden:true}
+        ]
+      }
+    ]
+  },
+
+  python: {
+    key:'python', name:'Python', color:'var(--python)', short:'PY',
+    desc:'Core algorithms, dynamic programming, and clean Pythonic solutions.',
+    piston:{ language:'python', version:null },
+    questions:[
+      {
+        title:'Median of Two Sorted Arrays',
+        desc:`Given two sorted integer arrays of size \`n\` and \`m\`, print the median of the combined array.
+
+**Input format:** line 1: \`n m\`, line 2: n integers (array 1, sorted), line 3: m integers (array 2, sorted).
+**Output format:** the median, printed as a float with exactly one decimal place (e.g. \`2.5\` or \`2.0\`).`,
+        constraints:['1 ≤ n, m ≤ 1000','arrays are already sorted ascending'],
+        starter:`def find_median(a, b):
+    # TODO: implement
+    pass
+
+n, m = map(int, input().split())
+a = list(map(int, input().split()))
+b = list(map(int, input().split()))
+print(find_median(a, b))`,
+        tests:[
+          {input:'2 2\n1 3\n2 4\n', output:'2.5', hidden:false},
+          {input:'1 2\n10\n1 2\n', output:'2.0', hidden:false},
+          {input:'3 3\n1 3 5\n2 4 6\n', output:'3.5', hidden:true}
+        ]
+      },
+      {
+        title:'Longest Increasing Subsequence',
+        desc:`Given an array of \`n\` integers, print the length of the longest strictly increasing subsequence.
+
+**Input format:** line 1: \`n\`, line 2: n integers.
+
+**Output format:** a single integer.`,
+        constraints:['1 ≤ n ≤ 2000','-10^9 ≤ value ≤ 10^9'],
+        starter:`def lis_length(arr):
+    # TODO: implement
+    pass
+
+n = int(input())
+arr = list(map(int, input().split()))
+print(lis_length(arr))`,
+        tests:[
+          {input:'8\n10 9 2 5 3 7 101 18\n', output:'4', hidden:false},
+          {input:'6\n7 7 7 7 7 7\n', output:'1', hidden:false},
+          {input:'6\n1 3 6 7 9 4\n', output:'5', hidden:true}
+        ]
+      },
+      {
+        title:'Word Break',
+        desc:`Given a string \`s\` and a dictionary of \`k\` words, print \`True\` if \`s\` can be segmented into a space-separated sequence of one or more dictionary words, otherwise print \`False\`.
+
+**Input format:** line 1: string s, line 2: integer k, line 3: k space-separated dictionary words.
+
+Dictionary words may be reused any number of times.`,
+        constraints:['1 ≤ length of s ≤ 300','1 ≤ k ≤ 1000'],
+        starter:`def word_break(s, word_dict):
+    # TODO: implement
+    pass
+
+s = input().strip()
+k = int(input())
+words = input().split()
+print(word_break(s, set(words)))`,
+        tests:[
+          {input:'leetcode\n2\nleet code\n', output:'True', hidden:false},
+          {input:'catsandog\n5\ncats dog sand and cat\n', output:'False', hidden:false},
+          {input:'applepenapple\n2\napple pen\n', output:'True', hidden:true}
+        ]
+      }
+    ]
+  }
+};
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+let state = {
+  trackKey:null,
+  currentQ:0,
+  timeLeft:3600,
+  timerHandle:null,
+  qState:[], // per question: {code, results:[{status,actual}], submitted:bool, passedCount}
+  SQL:null,
+  pistonVersions:{}
+};
+
+// Auto-start assessment workspace immediately
+(function initAssessment(){
+  const params = new URLSearchParams(window.location.search);
+  const trackParam = (params.get('track') || '').toLowerCase();
+  const selectedTrack = (trackParam && TRACKS[trackParam]) ? trackParam : 'java';
+  startTrack(selectedTrack);
+})();
+
+/* =========================================================================
+   TRACK START
+   ========================================================================= */
+function startTrack(key){
+  state.trackKey = key;
+  state.currentQ = 0;
+  state.timeLeft = 3600;
+  const track = TRACKS[key];
+  state.qState = track.questions.map(q=>({
+    code: q.starter,
+    results: null,
+    submitted:false,
+    passedCount:0
+  }));
+
+  const landingEl = document.getElementById('landing');
+  if (landingEl) landingEl.classList.remove('active');
+  document.getElementById('assessment').classList.add('active');
+
+  const pill = document.getElementById('topicPill');
+  pill.style.setProperty('--card-color', track.color);
+  document.getElementById('topicPillText').textContent = track.name + ' Track';
+  document.getElementById('langTagText').textContent = track.key==='sql' ? 'MySQL (SQL)' : track.name;
+  document.querySelector('.lang-tag .swatch').style.background = track.color;
+
+  buildQNav();
+  loadQuestion(0);
+  startTimer();
+  prefetchPistonVersions();
+}
+
+function prefetchPistonVersions(){
+  fetch('https://emkc.org/api/v2/piston/runtimes')
+    .then(r=>r.json())
+    .then(list=>{
+      const py = list.find(r=>r.language==='python');
+      const jv = list.find(r=>r.language==='java');
+      if(py) state.pistonVersions.python = py.version;
+      if(jv) state.pistonVersions.java = jv.version;
+    })
+    .catch(()=>{ /* fall back to defaults set at call time */ });
+}
+
+/* =========================================================================
+   TIMER
+   ========================================================================= */
+function startTimer(){
+  clearInterval(state.timerHandle);
+  updateTimerDisplay();
+  state.timerHandle = setInterval(()=>{
+    state.timeLeft--;
+    updateTimerDisplay();
+    if(state.timeLeft<=0){
+      clearInterval(state.timerHandle);
+      finishAssessment(true);
+    }
+  }, 1000);
+}
+function updateTimerDisplay(){
+  const m = Math.floor(state.timeLeft/60);
+  const s = state.timeLeft%60;
+  document.getElementById('timerVal').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const box = document.getElementById('timerBox');
+  box.classList.toggle('low', state.timeLeft <= 300);
+}
+
+/* =========================================================================
+   SIDEBAR NAV
+   ========================================================================= */
+function buildQNav(){
+  const track = TRACKS[state.trackKey];
+  const nav = document.getElementById('qnavList');
+  nav.innerHTML = '';
+  track.questions.forEach((q,i)=>{
+    const item = document.createElement('div');
+    item.className = 'qnav-item' + (i===state.currentQ?' active':'');
+    item.dataset.idx = i;
+    item.innerHTML = `<span class="qnav-status" id="qnavStatus${i}">${i+1}</span><span>${q.title}</span>`;
+    item.addEventListener('click', ()=>{ saveCurrentCode(); loadQuestion(i); });
+    nav.appendChild(item);
+  });
+  refreshQNavStatuses();
+}
+function refreshQNavStatuses(){
+  const track = TRACKS[state.trackKey];
+  let totalPassed = 0, totalCases = 0;
+  track.questions.forEach((q,i)=>{
+    totalCases += q.tests.length;
+    const st = state.qState[i];
+    totalPassed += st.passedCount;
+    const el = document.getElementById(`qnavStatus${i}`);
+    if(!el) return;
+    el.className = 'qnav-status';
+    el.textContent = i+1;
+    if(st.submitted){
+      if(st.passedCount === q.tests.length){ el.classList.add('passed'); el.textContent='✓'; }
+      else { el.classList.add('attempted'); el.textContent='!'; }
+    }
+    document.querySelectorAll('.qnav-item').forEach(n=>{
+      n.classList.toggle('active', Number(n.dataset.idx)===state.currentQ);
+    });
+  });
+  document.getElementById('sidebarScore').textContent = `${totalPassed} / ${totalCases}`;
+}
+
+/* =========================================================================
+   LOAD QUESTION
+   ========================================================================= */
+function saveCurrentCode(){
+  if(state.trackKey===null) return;
+  state.qState[state.currentQ].code = document.getElementById('editor').value;
+}
+
+function loadQuestion(idx){
+  state.currentQ = idx;
+  const track = TRACKS[state.trackKey];
+  const q = track.questions[idx];
+  const st = state.qState[idx];
+
+  document.getElementById('questionPane').innerHTML = renderQuestionHTML(q, idx, track);
+  const editor = document.getElementById('editor');
+  editor.value = st.code;
+  editor.readOnly = st.submitted;
+  editor.style.opacity = st.submitted ? '0.6' : '1';
+
+  document.getElementById('runBtn').disabled = st.submitted;
+  document.getElementById('submitBtn').disabled = st.submitted;
+  document.getElementById('submitBtn').textContent = st.submitted ? 'Submitted ✓' : 'Submit Question';
+
+  renderResults(st, q);
+  refreshQNavStatuses();
+}
+
+function mdInline(text){
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+}
+
+function renderQuestionHTML(q, idx, track){
+  let examplesHTML = '';
+  if(track.key === 'sql'){
+    examplesHTML = `
+      <div class="q-section-title">Sample Data</div>
+      <div class="example-block">
+        <div class="ex-label">Table setup</div>
+        <pre>${escapeHTML(track.questions[idx].schema)}
+${escapeHTML(track.questions[idx].exampleSeed)}</pre>
+      </div>
+      <div class="example-block">
+        <div class="ex-label">Expected output for sample data above</div>
+        <pre>${escapeHTML(JSON.stringify(track.questions[idx].exampleResult, null, 2))}</pre>
+      </div>`;
+  } else {
+    const visible = q.tests.filter(t=>!t.hidden);
+    examplesHTML = `<div class="q-section-title">Examples</div>` + visible.map((t,i)=>`
+      <div class="example-block">
+        <div class="ex-label">Example ${i+1}</div>
+        <pre><b>Input</b>
+${escapeHTML(t.input.trimEnd())}
+
+<b>Output</b>
+${escapeHTML(t.output)}</pre>
+      </div>`).join('');
+  }
+
+  return `
+    <div class="q-head">
+      <span class="q-difficulty">Hard</span>
+      <span class="q-index">Question ${idx+1} of ${track.questions.length}</span>
+    </div>
+    <div class="q-title">${escapeHTML(q.title)}</div>
+    <div class="q-desc">${mdInline(q.desc)}</div>
+    ${examplesHTML}
+    <div class="q-section-title">Constraints</div>
+    <ul class="constraints-list">${q.constraints.map(c=>`<li>${mdInline(c)}</li>`).join('')}</ul>
+    <div style="height:20px"></div>
+  `;
+}
+function escapeHTML(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* =========================================================================
+   RUN / SUBMIT
+   ========================================================================= */
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  const track = TRACKS[state.trackKey];
+  const q = track.questions[state.currentQ];
+  const st = state.qState[state.currentQ];
+  if(st.submitted) return;
+  document.getElementById('editor').value = q.starter;
+  st.code = q.starter;
+});
+
+document.getElementById('runBtn').addEventListener('click', ()=> executeTests(false));
+document.getElementById('submitBtn').addEventListener('click', ()=> executeTests(true));
+
+async function executeTests(isSubmit){
+  const track = TRACKS[state.trackKey];
+  const q = track.questions[state.currentQ];
+  const st = state.qState[state.currentQ];
+  if(st.submitted) return;
+
+  saveCurrentCode();
+  const code = st.code;
+
+  const runBtn = document.getElementById('runBtn');
+  const submitBtn = document.getElementById('submitBtn');
+  runBtn.disabled = true; submitBtn.disabled = true;
+  const activeBtn = isSubmit ? submitBtn : runBtn;
+  const originalLabel = activeBtn.textContent;
+  activeBtn.innerHTML = '<span class="spinner"></span>Running…';
+
+  const testsToRun = isSubmit ? q.tests : q.tests.filter(t=>!t.hidden);
+
+  let results;
+  try{
+    if(track.key === 'sql'){
+      results = await runSqlTests(q, testsToRun);
+    } else {
+      results = await runCodeTests(track, code, testsToRun);
+    }
+  } catch(err){
+    results = testsToRun.map(t=>({hidden:t.hidden, status:'fail', actual:'Error: '+ (err.message||err)}));
+  }
+
+  if(isSubmit){
+    st.submitted = true;
+    st.results = results;
+    st.passedCount = results.filter(r=>r.status==='pass').length;
+    document.getElementById('editor').readOnly = true;
+    document.getElementById('editor').style.opacity = '0.6';
+    submitBtn.textContent = 'Submitted ✓';
+  } else {
+    st.lastRunResults = results;
+    runBtn.disabled = false;
+    submitBtn.disabled = false;
+    runBtn.textContent = originalLabel;
+  }
+
+  renderResults(st, q, isSubmit ? null : results);
+  refreshQNavStatuses();
+}
+
+/* ---- Piston (Java / Python) execution ---- */
+async function runCodeTests(track, code, tests){
+  const lang = track.piston.language;
+  const version = state.pistonVersions[lang] || track.piston.version || (lang==='python' ? '3.10.0' : '15.0.2');
+  const filename = lang==='java' ? 'Solution.java' : 'main.py';
+
+  const results = [];
+  for(const t of tests){
+    let actual = '';
+    let status = 'fail';
+    try{
+      const resp = await fetch('https://emkc.org/api/v2/piston/execute', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          language: lang,
+          version: version,
+          files:[{ name: filename, content: code }],
+          stdin: t.input
+        })
+      });
+      const data = await resp.json();
+      if(data.compile && data.compile.code !== 0){
+        actual = 'Compile error:\n' + (data.compile.stderr || data.compile.output || 'unknown error');
+      } else if(data.run){
+        actual = (data.run.stdout || '').trim();
+        if(data.run.stderr && !actual){ actual = 'Runtime error:\n' + data.run.stderr.trim(); }
+        const expected = t.output.trim();
+        status = normalizeOutput(actual) === normalizeOutput(expected) ? 'pass' : 'fail';
+      }
+    } catch(e){
+      actual = 'Execution failed: ' + e.message;
+    }
+    results.push({hidden:t.hidden, status, actual, expected:t.output, input:t.input});
+  }
+  return results;
+}
+function normalizeOutput(s){
+  return s.split('\n').map(l=>l.trim()).join('\n').trim();
+}
+
+/* ---- sql.js execution ---- */
+async function getSQL(){
+  if(state.SQL) return state.SQL;
+  state.SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` });
+  return state.SQL;
+}
+async function runSqlTests(q, tests){
+  const SQLlib = await getSQL();
+  const results = [];
+  for(const t of tests){
+    let actual, status='fail', errMsg=null;
+    try{
+      const db = new SQLlib.Database();
+      db.run(q.schema);
+      db.run(t.seed);
+      const userSql = document.getElementById('editor').value;
+      const res = db.exec(userSql);
+      let rows = [];
+      if(res.length){
+        const cols = res[0].columns;
+        rows = res[0].values.map(v=>{
+          const o={}; cols.forEach((c,i)=>o[c]=v[i]); return o;
+        });
+      }
+      actual = rows;
+      status = compareRowSets(rows, t.expected) ? 'pass' : 'fail';
+      db.close();
+    } catch(e){
+      errMsg = e.message;
+      actual = [];
+      status = 'fail';
+    }
+    results.push({hidden:t.hidden, status, actual, expected:t.expected, seed:t.seed, error:errMsg});
+  }
+  return results;
+}
+function compareRowSets(actual, expected){
+  const norm = arr => arr.map(r=>{
+    const o={};
+    Object.keys(r).sort().forEach(k=>{
+      let v = r[k];
+      if(typeof v === 'number') v = Number(v);
+      o[k]=v;
+    });
+    return JSON.stringify(o);
+  }).sort();
+  const a = norm(actual), e = norm(expected);
+  if(a.length !== e.length) return false;
+  for(let i=0;i<a.length;i++) if(a[i]!==e[i]) return false;
+  return true;
+}
+
+/* =========================================================================
+   RENDER RESULTS PANEL
+   ========================================================================= */
+function renderResults(st, q, freshResults){
+  const body = document.getElementById('resultsBody');
+  const verdict = document.getElementById('resultsVerdict');
+  const results = freshResults || st.results || st.lastRunResults;
+
+  if(!results){
+    body.innerHTML = '<div class="results-empty">Run your code to see test case results here.</div>';
+    verdict.textContent = '';
+    return;
+  }
+
+  const passed = results.filter(r=>r.status==='pass').length;
+  verdict.innerHTML = `<span style="color:${passed===results.length ? 'var(--success)':'var(--amber)'}">${passed} / ${results.length} passed</span>`;
+
+  body.innerHTML = results.map((r,i)=>{
+    const label = r.hidden ? 'Hidden Test Case' : `Test Case ${i+1}`;
+    const icon = r.status==='pass' ? '✓' : '✕';
+    const iconClass = r.status==='pass' ? 'pass' : 'fail';
+    let detail = '';
+    if(!r.hidden){
+      if(r.seed !== undefined){
+        detail = `
+          <div class="tc-detail show">
+            <div class="tc-io-block"><div class="tc-io-label">Seed Data</div><div class="test-io">${escapeHTML(r.seed)}</div></div>
+            <div class="tc-io-grid" style="margin-top:8px;">
+              <div class="tc-io-block"><div class="tc-io-label">Expected</div><div class="test-io">${escapeHTML(JSON.stringify(r.expected))}</div></div>
+              <div class="tc-io-block"><div class="tc-io-label">Your Output</div><div class="test-io">${escapeHTML(r.error ? 'SQL Error: '+r.error : JSON.stringify(r.actual))}</div></div>
+            </div>
+          </div>`;
+      } else {
+        detail = `
+          <div class="tc-detail show">
+            <div class="tc-io-grid">
+              <div class="tc-io-block"><div class="tc-io-label">Input</div><div class="test-io">${escapeHTML(r.input||'')}</div></div>
+              <div class="tc-io-block"><div class="tc-io-label">Expected</div><div class="test-io">${escapeHTML(r.expected||'')}</div></div>
+            </div>
+            <div class="tc-io-block" style="margin-top:8px;"><div class="tc-io-label">Your Output</div><div class="test-io">${escapeHTML(r.actual||'')}</div></div>
+          </div>`;
+      }
+    } else {
+      detail = `<div class="tc-detail show" style="color:var(--text-faint);">Input and expected output are hidden. Only the pass/fail result is shown.</div>`;
+    }
+    return `
+      <div class="tc-row">
+        <div class="tc-head">
+          <span class="tc-status-icon ${iconClass}">${icon}</span>
+          <span>${label}</span>
+          ${r.hidden ? '<span class="tc-lock">🔒 locked</span>' : ''}
+        </div>
+        ${detail}
+      </div>`;
+  }).join('');
+}
+
+/* =========================================================================
+   FINISH ASSESSMENT
+   ========================================================================= */
+document.getElementById('finishBtn').addEventListener('click', ()=>{
+  saveCurrentCode();
+  if(confirm('Submit the assessment now? Any unsubmitted questions will be auto-submitted with your current code and locked.')){
+    finishAssessment(false);
+  }
+});
+
+async function finishAssessment(timedOut){
+  clearInterval(state.timerHandle);
+  const track = TRACKS[state.trackKey];
+
+  document.getElementById('finishBtn').disabled = true;
+  document.getElementById('finishBtn').textContent = 'Grading…';
+
+  for(let i=0;i<track.questions.length;i++){
+    const st = state.qState[i];
+    if(!st.submitted){
+      const q = track.questions[i];
+      let results;
+      try{
+        if(track.key==='sql'){
+          const savedEditor = document.getElementById('editor');
+          const tmpVal = i===state.currentQ ? savedEditor.value : st.code;
+          if(i===state.currentQ){ results = await runSqlTests(q, q.tests); }
+          else {
+            // temporarily run against stored code for non-current questions
+            results = await runSqlTestsWithCode(q, q.tests, st.code);
+          }
+        } else {
+          const codeToRun = i===state.currentQ ? document.getElementById('editor').value : st.code;
+          results = await runCodeTests(track, codeToRun, q.tests);
+        }
+      } catch(e){
+        results = q.tests.map(t=>({hidden:t.hidden, status:'fail', actual:'Not evaluated'}));
+      }
+      st.submitted = true;
+      st.results = results;
+      st.passedCount = results.filter(r=>r.status==='pass').length;
+    }
+  }
+
+  showFinalResults(timedOut);
+}
+
+async function runSqlTestsWithCode(q, tests, code){
+  const SQLlib = await getSQL();
+  const results = [];
+  for(const t of tests){
+    let actual=[], status='fail', errMsg=null;
+    try{
+      const db = new SQLlib.Database();
+      db.run(q.schema);
+      db.run(t.seed);
+      const res = db.exec(code);
+      let rows = [];
+      if(res.length){
+        const cols = res[0].columns;
+        rows = res[0].values.map(v=>{ const o={}; cols.forEach((c,i)=>o[c]=v[i]); return o; });
+      }
+      actual = rows;
+      status = compareRowSets(rows, t.expected) ? 'pass':'fail';
+      db.close();
+    } catch(e){ errMsg=e.message; }
+    results.push({hidden:t.hidden, status, actual, expected:t.expected, error:errMsg});
+  }
+  return results;
+}
+
+async function showFinalResults(timedOut){
+  const track = TRACKS[state.trackKey];
+  let totalPassed=0, totalCases=0;
+  const breakdownRows = track.questions.map((q,i)=>{
+    const st = state.qState[i];
+    totalPassed += st.passedCount;
+    totalCases += q.tests.length;
+    const tag = st.passedCount===q.tests.length ? {c:'full',t:'All Passed'} :
+                st.passedCount>0 ? {c:'partial',t:`${st.passedCount}/${q.tests.length} Passed`} :
+                {c:'zero',t:'0 Passed'};
+    return `<div class="breakdown-row"><span class="breakdown-q">${escapeHTML(q.title)}</span><span class="breakdown-tag ${tag.c}">${tag.t}</span></div>`;
+  }).join('');
+
+  const pct = Math.round((totalPassed/totalCases)*100);
+
+  document.getElementById('finalScoreNum').textContent = totalPassed;
+  document.querySelector('#resultsScreen .denom').textContent = `/ ${totalCases} test cases passed`;
+  document.getElementById('finalScoreBar').style.width = pct + '%';
+  document.getElementById('finalBreakdown').innerHTML = breakdownRows;
+  document.getElementById('resultsSub').textContent = timedOut
+    ? `Time's up — the ${track.name} track was auto-submitted.`
+    : `You completed the ${track.name} track.`;
+
+  // Save assessment to Spring Boot backend database
+  try {
+    const rawSession = sessionStorage.getItem("bb_session");
+    const session = rawSession ? JSON.parse(rawSession) : null;
+    const employeeId = (session && session.employee && session.employee.emplId) ? session.employee.emplId : 1;
+    const today = new Date().toISOString().split("T")[0];
+
+    // 1. Save assessment record
+    await fetch("http://localhost:8081/api/assessments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ employeeId, technology: track.name, score: pct, date: today })
+    });
+
+    // 2. Derive & save skill
+    const skillLevel = pct >= 80 ? "Expert" : pct >= 60 ? "Intermediate" : "Beginner";
+    await fetch("http://localhost:8081/api/skills", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emplId: employeeId, skillName: track.name, skillLevels: skillLevel })
+    });
+  } catch (err) {
+    console.warn("[BenchBridge] Backend update error:", err.message);
+  }
+
+  document.getElementById('assessment').classList.remove('active');
+  document.getElementById('resultsScreen').classList.add('active');
+  document.getElementById('resultsScreen').style.display='flex';
+}
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  window.location.href = "employee-dashboard.html";
+});
+</script>
+</body>
+</html>

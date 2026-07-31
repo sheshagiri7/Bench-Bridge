@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BenchBridge | Sign In</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+
+    <!-- External Styles -->
+    <link rel="stylesheet" href="css/login.css" />
+</head>
+
+<body>
+
+    <main class="login-layout">
+
+        <!-- =========================
+             LEFT BRANDING PANEL
+        ========================== -->
+        <section class="branding-panel">
+
+            <div class="branding-content">
+
+                <div class="brand">
+
+                    <div class="brand-logo">
+                        <img src="images/logo.png" alt="BenchBridge logo" />
+                    </div>
+
+                    <div class="brand-text">
+                        <h1>BenchBridge</h1>
+                        <span>Enterprise Workforce Management</span>
+                    </div>
+
+                </div>
+
+                <div class="hero-content">
+
+                    <span class="hero-tag">
+                        Workforce Intelligence Platform
+                    </span>
+
+                    <h2>
+                        Connect Talent.<br />
+                        Reduce Bench Time.
+                    </h2>
+
+                    <p>
+                        Securely access your BenchBridge workspace to manage
+                        employees, workforce availability, allocations,
+                        reporting, and organizational insights.
+                    </p>
+
+                </div>
+
+                <div class="feature-grid">
+
+                    <article class="feature-card">
+                        <i class="fa-solid fa-users"></i>
+                        <div>
+                            <h3>Employee Management</h3>
+                            <p>Unified workforce records.</p>
+                        </div>
+                    </article>
+
+                    <article class="feature-card">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <div>
+                            <h3>Live Analytics</h3>
+                            <p>Track utilization in real time.</p>
+                        </div>
+                    </article>
+
+                    <article class="feature-card">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <div>
+                            <h3>Enterprise Security</h3>
+                            <p>Role-based protected access.</p>
+                        </div>
+                    </article>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- =========================
+             LOGIN PANEL
+        ========================== -->
+
+        <section class="login-panel">
+
+            <div class="login-card">
+
+                <header class="login-header">
+
+                    <h2>Welcome Back</h2>
+
+                    <p>
+                        Sign in to continue to your BenchBridge dashboard.
+                    </p>
+
+                </header>
+
+                <nav class="role-selector" aria-label="User Role">
+
+                    <button
+                        type="button"
+                        class="role-tab active"
+                        data-role="employee"
+                        aria-pressed="true">
+                        Employee
+                    </button>
+
+                    <button
+                        type="button"
+                        class="role-tab"
+                        data-role="manager"
+                        aria-pressed="false">
+                        Manager
+                    </button>
+
+                </nav>
+
+                <!-- Login Form -->
+
+                <form class="login-form" id="loginForm">
+
+                    <!-- Dynamic ID -->
+
+                    <div class="form-group">
+
+                        <label
+                            id="userIdLabel"
+                            for="userId">
+                            Employee ID
+                        </label>
+
+                        <div class="input-field">
+
+                            <i class="fa-regular fa-id-badge"></i>
+
+                            <input
+                                type="text"
+                                id="userId"
+                                name="userId"
+                                placeholder="Enter Employee ID"
+                                autocomplete="username"
+                                required />
+
+                        </div>
+
+                    </div>
+
+                    <!-- Password -->
+
+                    <div class="form-group">
+
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <div class="input-field">
+
+                            <i class="fa-solid fa-lock"></i>
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Enter Password"
+                                autocomplete="current-password"
+                                required />
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                aria-label="Toggle password visibility">
+
+                                <i class="fa-regular fa-eye"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Options -->
+
+                    <div class="form-options">
+
+                        <label class="remember-me">
+
+                            <input
+                                type="checkbox"
+                                id="rememberMe"
+                                name="rememberMe" />
+
+                            <span>Remember Me</span>
+
+                        </label>
+
+                        <a href="#" class="forgot-link">
+                            Forgot Password?
+                        </a>
+
+                    </div>
+
+                    <!-- Submit -->
+
+                    <button
+                        type="submit"
+                        class="signin-btn">
+
+                        <span>Sign In</span>
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </button>
+
+                </form>
+
+                <!-- Footer -->
+
+                <footer class="login-footer">
+
+                    <p>
+                        New to BenchBridge?
+
+                        <a href="register.html">
+                            Create an Account
+                        </a>
+                    </p>
+
+                </footer>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- External JavaScript -->
+    <script src="js/login.js"></script>
+
+</body>
+</html>
