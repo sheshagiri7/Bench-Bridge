@@ -98,7 +98,16 @@ async function loadDashboardData() {
     // Fetch all projects
     STATE.projects  = await fetchWithFallback(`${API_BASE}/api/projects`, {}, MOCK_PROJECTS);
     // Fetch all project matches (no employee filter — manager sees all)
-    STATE.matches   = await fetchWithFallback(`${API_BASE}/api/project-matches`, {}, MOCK_MATCHES);
+    const remoteMatches = await fetchWithFallback(`${API_BASE}/api/project-matches`, {}, []);
+    const localApplications = JSON.parse(localStorage.getItem("bb_applications") || "[]");
+    
+    // Combine backend matches and real user applications from localStorage
+    const matchMap = new Map();
+    [...remoteMatches, ...localApplications].forEach(m => {
+        const key = `${m.employeeId}_${m.projectId}`;
+        matchMap.set(key, m);
+    });
+    STATE.matches = Array.from(matchMap.values());
 
     renderKPIs();
     renderOverviewMatches();
@@ -387,6 +396,13 @@ async function handleAllocation(matchId, newStatus, emplId) {
     const match = matchIndex !== -1 ? STATE.matches[matchIndex] : null;
     if (matchIndex !== -1) {
         STATE.matches.splice(matchIndex, 1);
+    }
+
+    // Remove processed request from local applications list
+    if (match) {
+        let localApps = JSON.parse(localStorage.getItem("bb_applications") || "[]");
+        localApps = localApps.filter(a => !(a.employeeId === emplId && a.projectId === match.projectId));
+        localStorage.setItem("bb_applications", JSON.stringify(localApps));
     }
 
     if (newStatus === "Approved") {

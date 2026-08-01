@@ -203,13 +203,8 @@ const API = {
             { headers: authHeaders() },
             async () => {
                 await delay(450);
-                return MOCK_PROJECTS.map(project => ({
-                    matchId: project.projectId,
-                    employeeId,
-                    projectId: project.projectId,
-                    matchScore: project.matchScore,
-                    status: project.matchStatus
-                }));
+                const localApps = JSON.parse(localStorage.getItem("bb_applications") || "[]");
+                return localApps.filter(a => String(a.employeeId) === String(employeeId));
             }
         );
     },
@@ -1160,6 +1155,23 @@ async function handleApply(button) {
         const employeeId = (CURRENT_EMPLOYEE && CURRENT_EMPLOYEE.emplId) || DEFAULT_EMPLOYEE_ID;
         await API.applyToProject(employeeId, projectId);
 
+        // Save application locally so Manager Dashboard sees real requests
+        const applications = JSON.parse(localStorage.getItem("bb_applications") || "[]");
+        const alreadyApplied = applications.some(a => a.employeeId === employeeId && a.projectId === projectId);
+        if (!alreadyApplied) {
+            applications.push({
+                matchId: Date.now(),
+                employeeId: employeeId,
+                employeeName: (CURRENT_EMPLOYEE && CURRENT_EMPLOYEE.name) || "Employee",
+                projectId: projectId,
+                projectName: projectName,
+                matchScore: 95,
+                status: "Applied",
+                appliedAt: new Date().toISOString()
+            });
+            localStorage.setItem("bb_applications", JSON.stringify(applications));
+        }
+
         button.classList.add("applied");
         button.innerHTML = '<i class="fa-solid fa-circle-check"></i> Applied';
         showToast(`Application sent for ${projectName}`);
@@ -1276,6 +1288,15 @@ function bindSkillTriggers() {
     }
 }
 
+function initGraphModal() {
+    const modal = document.getElementById("graphModal");
+    const closeBtn = document.getElementById("closeGraphModal");
+    const closeBtn2 = document.getElementById("closeGraphModalBtn");
+
+    if (closeBtn) closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+    if (closeBtn2) closeBtn2.addEventListener("click", () => modal.classList.remove("active"));
+}
+
 /* ==========================================================
    INIT
 ========================================================== */
@@ -1284,6 +1305,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initNavigation();
     initAssessmentModal();
     initSkillModal();
+    initGraphModal();
     bindAssessmentTriggers();
 
     const logoutBtn = document.querySelector(".logout-btn");
@@ -1433,7 +1455,8 @@ function renderFeed(employee, assessments = []) {
                 const modal = document.getElementById("assessmentModal");
                 if (modal) modal.classList.add("active");
             } else if (act === "view_graph") {
-                showToast("Opening Enterprise Resource Matching Graph...");
+                const modal = document.getElementById("graphModal");
+                if (modal) modal.classList.add("active");
             } else {
                 btn.closest("div[style*='background']").style.opacity = "0.5";
                 showToast("Notification updated.");
