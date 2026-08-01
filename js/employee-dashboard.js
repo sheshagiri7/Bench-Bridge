@@ -580,8 +580,20 @@ function initNavigation() {
 function renderProfile(employee, skills, assessments = []) {
     const container = document.getElementById("profileContainer");
 
-    const skillTags = (skills && skills.length > 0)
-        ? skills.map(skill =>
+    // Deduplicate skills by skillName — keep highest level entry
+    const levelOrder = { expert: 3, intermediate: 2, beginner: 1 };
+    const skillMap = new Map();
+    (skills || []).forEach(skill => {
+        const key = (skill.skillName || "").toLowerCase();
+        const existing = skillMap.get(key);
+        const curr = levelOrder[((skill.skillLevels || "").toLowerCase())] || 0;
+        const prev = existing ? (levelOrder[((existing.skillLevels || "").toLowerCase())] || 0) : -1;
+        if (!existing || curr > prev) skillMap.set(key, skill);
+    });
+    const uniqueSkills = Array.from(skillMap.values());
+
+    const skillTags = uniqueSkills.length > 0
+        ? uniqueSkills.map(skill =>
             `<span class="skill-tag">
                 <span class="level-dot ${levelClass(skill.skillLevels)}"></span>
                 ${skill.skillName}
@@ -624,11 +636,11 @@ function renderProfile(employee, skills, assessments = []) {
                     <div class="card-icon"><i class="fa-solid fa-code"></i></div>
                     <div>
                         <h3>Skills</h3>
-                        <p>Across ${skills ? skills.length : 0} technologies</p>
+                        <p>Across ${uniqueSkills.length} technologies</p>
                     </div>
                 </div>
-                <div class="stat-value">${skills ? skills.length : 0}<small> total</small></div>
-                <span class="stat-delta up"><i class="fa-solid fa-medal"></i> ${skills ? skills.filter(s => levelClass(s.skillLevels) === "expert").length : 0} expert level</span>
+                <div class="stat-value">${uniqueSkills.length}<small> total</small></div>
+                <span class="stat-delta up"><i class="fa-solid fa-medal"></i> ${uniqueSkills.filter(s => levelClass(s.skillLevels) === "expert").length} expert level</span>
             </div>
 
             <div class="card">
