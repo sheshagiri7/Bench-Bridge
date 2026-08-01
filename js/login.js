@@ -75,48 +75,154 @@ document.addEventListener("DOMContentLoaded", () => {
        OAUTH 2.0 SOCIAL LOGIN HANDLERS
     ====================================================== */
 
+    let oauthPopup = null;
+    let oauthMessageHandler = null;
+
     function setupOAuthLogin() {
         const googleBtn = document.getElementById("googleOAuthBtn");
         const githubBtn = document.getElementById("githubOAuthBtn");
 
         if (googleBtn) {
             googleBtn.addEventListener("click", () => handleOAuth("Google"));
+            googleBtn.addEventListener("mouseenter", () => {
+                googleBtn.style.background = "rgba(255,255,255,0.09)";
+                googleBtn.style.borderColor = "rgba(234,67,53,0.5)";
+            });
+            googleBtn.addEventListener("mouseleave", () => {
+                googleBtn.style.background = "rgba(255,255,255,0.04)";
+                googleBtn.style.borderColor = "rgba(255,255,255,0.12)";
+            });
         }
         if (githubBtn) {
             githubBtn.addEventListener("click", () => handleOAuth("GitHub"));
+            githubBtn.addEventListener("mouseenter", () => {
+                githubBtn.style.background = "rgba(255,255,255,0.09)";
+                githubBtn.style.borderColor = "rgba(255,255,255,0.4)";
+            });
+            githubBtn.addEventListener("mouseleave", () => {
+                githubBtn.style.background = "rgba(255,255,255,0.04)";
+                githubBtn.style.borderColor = "rgba(255,255,255,0.12)";
+            });
         }
+
+        // Listen for OAuth popup success message
+        window.addEventListener("message", (event) => {
+            if (!event.data || event.data.type !== "OAUTH_SUCCESS") return;
+            handleOAuthSuccess(event.data.provider, event.data.user);
+        });
     }
 
     function handleOAuth(provider) {
+        // Close any existing popup
+        if (oauthPopup && !oauthPopup.closed) {
+            oauthPopup.close();
+        }
+
+        // Popup dimensions
+        const w = 480, h = provider === "Google" ? 620 : 680;
+        const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
+        const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
+
+        const popupFile = provider === "Google" ? "oauth-google.html" : "oauth-github.html";
+        const popupUrl  = `${popupFile}?role=${encodeURIComponent(currentRole)}`;
+
+        oauthPopup = window.open(
+            popupUrl,
+            `${provider}OAuth`,
+            `width=${w},height=${h},left=${left},top=${top},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
+        );
+
+        if (!oauthPopup) {
+            // Popup was blocked — fallback to loading indicator with message
+            showOAuthBlockedNotice(provider);
+            return;
+        }
+
+        // Set button to "pending" state
+        const btnId = provider === "Google" ? "googleOAuthBtn" : "githubOAuthBtn";
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `
+                <span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:bb-spin 0.7s linear infinite;"></span>
+                <span>Waiting for ${provider}…</span>`;
+        }
+
+        // Monitor if popup gets closed without completing auth
+        const pollClosed = setInterval(() => {
+            if (oauthPopup && oauthPopup.closed) {
+                clearInterval(pollClosed);
+                resetOAuthButton(provider);
+            }
+        }, 500);
+    }
+
+    function handleOAuthSuccess(provider, user) {
+        // Close popup if still open
+        if (oauthPopup && !oauthPopup.closed) oauthPopup.close();
+
         startLoading();
-        // Simulate OAuth 2.0 token exchange and secure session establishment
-        setTimeout(() => {
-            const oauthUser = {
-                empId: "EMP-OAUTH-2026",
-                name: `${provider} Authenticated User`,
-                email: `user@${provider.toLowerCase()}.com`,
+
+        const role = user.role || currentRole;
+
+        const oauthUser = {
+            empId: `EMP-${provider.toUpperCase()}-${Date.now()}`,
+            name:  user.name,
+            email: user.email,
+            department: "Engineering",
+            experience: "N/A",
+            role:  role,
+            avatar: user.avatar,
+            avatarColor: user.color,
+            provider: provider
+        };
+
+        const session = {
+            token: `oauth2-${provider.toLowerCase()}-jwt-${Date.now()}`,
+            employee: {
+                emplId: Date.now(),
+                name:   oauthUser.name,
+                email:  oauthUser.email,
                 department: "Engineering",
-                experience: "4 Years",
-                role: currentRole
-            };
+                role: role
+            }
+        };
 
-            const session = {
-                token: `oauth2-${provider.toLowerCase()}-jwt-` + Date.now(),
-                employee: {
-                    emplId: 101,
-                    name: oauthUser.name,
-                    email: oauthUser.email,
-                    department: oauthUser.department,
-                    role: currentRole
-                }
-            };
+        sessionStorage.setItem("bb_session", JSON.stringify(session));
+        localStorage.setItem("benchbridge_session", JSON.stringify(oauthUser));
 
-            sessionStorage.setItem("bb_session", JSON.stringify(session));
-            localStorage.setItem("benchbridge_session", JSON.stringify(oauthUser));
+        const targetPage = role === "manager" ? "manager-dashboard.html" : "employee-dashboard.html";
 
-            const targetPage = currentRole === "manager" ? "manager-dashboard.html" : "employee-dashboard.html";
+        // Small delay so the loading animation shows
+        setTimeout(() => {
             window.location.replace(targetPage);
-        }, 1000);
+        }, 800);
+    }
+
+    function resetOAuthButton(provider) {
+        const btnId = provider === "Google" ? "googleOAuthBtn" : "githubOAuthBtn";
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.disabled = false;
+        if (provider === "Google") {
+            btn.innerHTML = `<i class="fa-brands fa-google" style="color:#ea4335;"></i><span>Google</span>`;
+        } else {
+            btn.innerHTML = `<i class="fa-brands fa-github" style="color:#ffffff;"></i><span>GitHub</span>`;
+        }
+    }
+
+    function showOAuthBlockedNotice(provider) {
+        const notice = document.createElement("div");
+        notice.style.cssText = `
+            position:fixed;top:20px;left:50%;transform:translateX(-50%);
+            background:#1e293b;border:1px solid rgba(248,81,73,0.4);
+            color:#f87171;padding:12px 20px;border-radius:10px;
+            font-size:0.85rem;z-index:9999;text-align:center;
+            box-shadow:0 4px 20px rgba(0,0,0,0.4);
+        `;
+        notice.textContent = `⚠️ Popup blocked. Please allow popups for ${provider} sign-in.`;
+        document.body.appendChild(notice);
+        setTimeout(() => notice.remove(), 4000);
     }
 
     /* ======================================================

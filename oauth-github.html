@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in to GitHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #7d8590;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --blue: #58a6ff;
+            --danger: #f85149;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 16px;
+        }
+
+        /* GitHub logo */
+        .gh-logo {
+            margin-bottom: 24px;
+        }
+        .gh-logo svg { width: 48px; height: 48px; fill: #e6edf3; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 380px;
+            padding: 24px;
+            animation: fadeUp .25s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .field-group { margin-bottom: 16px; }
+        .field-group label {
+            display: block;
+            font-size: .85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        .field-group input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: .9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .field-group input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(88,166,255,.15);
+        }
+        .field-group input::placeholder { color: var(--muted); }
+
+        .forgot-row {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 6px;
+        }
+        .forgot-row label { margin-bottom: 0; }
+        .forgot-link { font-size: .8rem; color: var(--blue); text-decoration: none; }
+        .forgot-link:hover { text-decoration: underline; }
+
+        .sign-in-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent);
+            color: #fff;
+            border: none; border-radius: 6px;
+            font-size: .9rem; font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background .2s, box-shadow .2s;
+            margin-top: 4px;
+        }
+        .sign-in-btn:hover { background: var(--accent-hover); box-shadow: 0 2px 8px rgba(46,160,67,.3); }
+        .sign-in-btn:disabled { background: #1a3626; color: #3d7a4a; cursor: not-allowed; box-shadow: none; }
+
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 20px 0;
+            font-size: .8rem; color: var(--muted);
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Passkey btn */
+        .passkey-btn {
+            width: 100%; padding: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: .875rem; font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background .2s, border-color .2s;
+        }
+        .passkey-btn:hover { background: rgba(255,255,255,.05); border-color: #8b949e; }
+
+        .create-row {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            text-align: center;
+            margin-top: 16px;
+            font-size: .875rem; color: var(--muted);
+        }
+        .create-row a { color: var(--blue); text-decoration: none; }
+        .create-row a:hover { text-decoration: underline; }
+
+        .footer-links {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 8px 14px;
+            margin-top: 24px;
+            font-size: .75rem;
+        }
+        .footer-links a { color: var(--blue); text-decoration: none; }
+        .footer-links a:hover { text-decoration: underline; }
+
+        /* Error */
+        .error-banner {
+            display: none;
+            background: rgba(248,81,73,.12);
+            border: 1px solid rgba(248,81,73,.4);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: .85rem;
+            color: var(--danger);
+            margin-bottom: 16px;
+        }
+        .error-banner.show { display: block; }
+
+        /* Loading overlay */
+        #loadingOverlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(13,17,23,.85);
+            align-items: center; justify-content: center;
+            flex-direction: column; gap: 16px;
+            z-index: 100;
+        }
+        #loadingOverlay.show { display: flex; }
+
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: .875rem; color: var(--muted); }
+
+        /* Saved accounts */
+        .saved-accounts { margin-bottom: 16px; }
+        .saved-accounts h2 { font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .04em; }
+        .saved-account-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            transition: background .15s, border-color .15s;
+        }
+        .saved-account-item:hover { background: rgba(255,255,255,.04); border-color: #8b949e; }
+        .gh-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .85rem; font-weight: 600; color: #fff;
+        }
+        .gh-handle { font-size: .875rem; font-weight: 500; color: var(--text); }
+        .gh-email { font-size: .75rem; color: var(--muted); }
+
+        .demo-hint {
+            font-size: .75rem; color: var(--muted);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p class="loading-text">Authenticating with GitHub…</p>
+</div>
+
+<!-- GitHub Logo -->
+<div class="gh-logo">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+    </svg>
+</div>
+
+<div class="card">
+    <h1>Sign in to GitHub</h1>
+
+    <!-- Saved accounts -->
+    <div class="saved-accounts">
+        <h2>Saved accounts</h2>
+        <div class="saved-account-item" data-name="DevUser_Alex" data-email="alex.dev@github.com" data-color="#238636">
+            <div class="gh-avatar" style="background:#238636;">A</div>
+            <div>
+                <p class="gh-handle">DevUser_Alex</p>
+                <p class="gh-email">alex.dev@github.com</p>
+            </div>
+        </div>
+        <div class="saved-account-item" data-name="sarah-codes" data-email="sarah.codes@github.com" data-color="#1f6feb">
+            <div class="gh-avatar" style="background:#1f6feb;">S</div>
+            <div>
+                <p class="gh-handle">sarah-codes</p>
+                <p class="gh-email">sarah.codes@github.com</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider">or sign in with credentials</div>
+
+    <div class="error-banner" id="errorBanner">
+        Incorrect username or password. <a href="#">Reset your password</a>.
+    </div>
+
+    <p class="demo-hint">💡 Demo: enter any credentials to continue</p>
+
+    <div class="field-group">
+        <label for="usernameInput">Username or email address</label>
+        <input type="text" id="usernameInput" placeholder="Username or email" autocomplete="username" />
+    </div>
+
+    <div class="field-group">
+        <div class="forgot-row">
+            <label for="passwordInput">Password</label>
+            <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+        <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password" />
+    </div>
+
+    <button class="sign-in-btn" id="signInBtn">Sign in</button>
+
+    <div class="divider">or</div>
+
+    <button class="passkey-btn" id="passkeyBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/><rect x="4" y="14" width="16" height="8" rx="2"/>
+        </svg>
+        Sign in with a passkey
+    </button>
+
+    <div class="create-row">
+        New to GitHub? <a href="#">Create an account</a>
+    </div>
+</div>
+
+<div class="footer-links">
+    <a href="#">Terms</a>
+    <a href="#">Privacy</a>
+    <a href="#">Docs</a>
+    <a href="#">Contact GitHub</a>
+    <a href="#">Status</a>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get("role") || "employee";
+
+    // Saved account quick-click
+    document.querySelectorAll(".saved-account-item").forEach(item => {
+        item.addEventListener("click", () => {
+            completeAuth({
+                name:   item.dataset.name,
+                email:  item.dataset.email,
+                color:  item.dataset.color,
+                handle: item.dataset.name
+            });
+        });
+    });
+
+    // Passkey button (simulated)
+    document.getElementById("passkeyBtn").addEventListener("click", () => {
+        completeAuth({
+            name:   "passkey-user",
+            email:  "passkey@github.com",
+            color:  "#8250df",
+            handle: "passkey-user"
+        });
+    });
+
+    // Manual sign in
+    document.getElementById("passwordInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") attemptSignIn();
+    });
+    document.getElementById("usernameInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") document.getElementById("passwordInput").focus();
+    });
+    document.getElementById("signInBtn").addEventListener("click", attemptSignIn);
+
+    function attemptSignIn() {
+        const username = document.getElementById("usernameInput").value.trim();
+        const password = document.getElementById("passwordInput").value;
+
+        if (!username || !password) {
+            document.getElementById("errorBanner").classList.add("show");
+            document.getElementById("errorBanner").textContent = "Please enter your username and password.";
+            return;
+        }
+
+        document.getElementById("errorBanner").classList.remove("show");
+
+        const displayName = username.includes("@")
+            ? username.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+            : username;
+
+        completeAuth({
+            name:   displayName,
+            email:  username.includes("@") ? username : username + "@github.com",
+            color:  "#238636",
+            handle: username
+        });
+    }
+
+    function completeAuth(userData) {
+        document.getElementById("loadingOverlay").classList.add("show");
+
+        setTimeout(() => {
+            const payload = {
+                provider: "GitHub",
+                name:     userData.name,
+                email:    userData.email,
+                avatar:   userData.name[0].toUpperCase(),
+                color:    userData.color,
+                handle:   userData.handle,
+                role:     role
+            };
+
+            if (window.opener) {
+                window.opener.postMessage({ type: "OAUTH_SUCCESS", provider: "GitHub", user: payload }, "*");
+                window.close();
+            }
+        }, 1600);
+    }
+</script>
+
+</body>
+</html>

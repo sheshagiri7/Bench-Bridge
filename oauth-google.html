@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in – Google Accounts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+            background: #f1f3f4;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 28px;
+            box-shadow: 0 2px 18px rgba(0,0,0,.14), 0 4px 6px rgba(0,0,0,.08);
+            width: 448px;
+            padding: 48px 40px 36px;
+            animation: fadeUp .25s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Google logo */
+        .google-logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+        .google-logo svg { width: 75px; height: 24px; }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: #202124;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: .875rem;
+            color: #5f6368;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        /* Account picker */
+        .account-list { list-style: none; }
+
+        .account-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background .15s;
+            border: 1.5px solid transparent;
+        }
+        .account-item:hover { background: #f8f9fa; }
+        .account-item.selected { border-color: #1a73e8; background: #e8f0fe; }
+
+        .avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 600; color: #fff;
+            flex-shrink: 0;
+        }
+
+        .acc-info .name { font-size: .9rem; font-weight: 500; color: #202124; }
+        .acc-info .email { font-size: .8rem; color: #5f6368; }
+
+        .divider {
+            border: 0; border-top: 1px solid #e8eaed;
+            margin: 20px 0;
+        }
+
+        .add-account {
+            display: flex; align-items: center; gap: 14px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: .875rem; color: #1a73e8;
+            transition: background .15s;
+        }
+        .add-account:hover { background: #f8f9fa; }
+        .add-account svg { width: 20px; height: 20px; }
+
+        /* Password step */
+        #step-password { display: none; }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: none; border: none; cursor: pointer;
+            font-size: .85rem; color: #1a73e8;
+            margin-bottom: 24px;
+        }
+
+        .profile-summary {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 20px;
+        }
+        .profile-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; font-weight: 600; color: #fff;
+        }
+
+        .field-wrap { position: relative; margin-bottom: 24px; }
+        .field-wrap input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #dadce0;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            background: transparent;
+            color: #202124;
+        }
+        .field-wrap input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26,115,232,.15);
+        }
+        .field-wrap label {
+            position: absolute; top: 50%; left: 16px;
+            transform: translateY(-50%);
+            font-size: 1rem; color: #5f6368;
+            pointer-events: none;
+            transition: all .15s;
+            background: #fff; padding: 0 4px;
+        }
+        .field-wrap input:focus ~ label,
+        .field-wrap input:not(:placeholder-shown) ~ label {
+            top: 0; font-size: .75rem; color: #1a73e8;
+        }
+
+        .actions {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 8px;
+        }
+        .forgot-link { font-size: .85rem; color: #1a73e8; text-decoration: none; }
+        .forgot-link:hover { text-decoration: underline; }
+
+        .next-btn {
+            background: #1a73e8; color: #fff;
+            border: none; border-radius: 4px;
+            padding: 10px 24px;
+            font-size: .9rem; font-weight: 500;
+            cursor: pointer;
+            transition: background .2s, box-shadow .2s;
+            font-family: inherit;
+        }
+        .next-btn:hover { background: #1557b0; box-shadow: 0 2px 8px rgba(26,115,232,.35); }
+        .next-btn:disabled { background: #dadce0; color: #bdc1c6; cursor: not-allowed; box-shadow: none; }
+
+        /* Loading overlay */
+        #loadingOverlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(255,255,255,.85);
+            align-items: center; justify-content: center;
+            flex-direction: column; gap: 16px;
+            z-index: 100;
+            border-radius: 28px;
+        }
+        #loadingOverlay.show { display: flex; }
+
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid #e8eaed;
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: .875rem; color: #5f6368; }
+
+        /* Footer */
+        .footer {
+            display: flex; justify-content: space-between;
+            margin-top: 28px;
+            font-size: .75rem; color: #5f6368;
+        }
+        .footer a { color: #1a73e8; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .error-msg {
+            color: #c5221f; font-size: .8rem;
+            margin-top: 6px; display: none;
+        }
+        .error-msg.show { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="card" style="position:relative;">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Signing you in…</p>
+    </div>
+
+    <!-- Google Logo -->
+    <div class="google-logo">
+        <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+            <path d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z" fill="#EA4335"/>
+            <path d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z" fill="#FBBC05"/>
+            <path d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z" fill="#4285F4"/>
+            <path d="M225 3v65h-9.5V3h9.5z" fill="#34A853"/>
+            <path d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z" fill="#EA4335"/>
+            <path d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65H35.29z" fill="#4285F4"/>
+        </svg>
+    </div>
+
+    <!-- STEP 1: Choose Account -->
+    <div id="step-account">
+        <h1>Choose an account</h1>
+        <p class="subtitle">to continue to BenchBridge</p>
+
+        <ul class="account-list" id="accountList">
+            <li class="account-item" data-name="Alex Johnson" data-email="alex.johnson@gmail.com" data-color="#1a73e8">
+                <div class="avatar" style="background:#1a73e8;">A</div>
+                <div class="acc-info">
+                    <p class="name">Alex Johnson</p>
+                    <p class="email">alex.johnson@gmail.com</p>
+                </div>
+            </li>
+            <li class="account-item" data-name="Sarah Mitchell" data-email="sarah.m@gmail.com" data-color="#34a853">
+                <div class="avatar" style="background:#34a853;">S</div>
+                <div class="acc-info">
+                    <p class="name">Sarah Mitchell</p>
+                    <p class="email">sarah.m@gmail.com</p>
+                </div>
+            </li>
+            <li class="account-item" data-name="Ravi Patel" data-email="ravi.patel@gmail.com" data-color="#ea4335">
+                <div class="avatar" style="background:#ea4335;">R</div>
+                <div class="acc-info">
+                    <p class="name">Ravi Patel</p>
+                    <p class="email">ravi.patel@gmail.com</p>
+                </div>
+            </li>
+        </ul>
+
+        <hr class="divider" />
+
+        <div class="add-account" id="useAnotherAccount">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2">
+                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                <path d="M12 14v6m-3-3h6" stroke="#1a73e8"/>
+            </svg>
+            Use another account
+        </div>
+
+        <div class="footer">
+            <a href="#">English (US)</a>
+            <span>
+                <a href="#">Help</a> &nbsp;·&nbsp;
+                <a href="#">Privacy</a> &nbsp;·&nbsp;
+                <a href="#">Terms</a>
+            </span>
+        </div>
+    </div>
+
+    <!-- STEP 2: Enter Password -->
+    <div id="step-password">
+        <button class="back-btn" id="backBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2.5">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+            Back
+        </button>
+
+        <div class="profile-summary" id="profileSummary">
+            <div class="profile-avatar" id="profileAvatar"></div>
+            <div>
+                <p style="font-size:.9rem;font-weight:500;color:#202124;" id="profileName"></p>
+                <p style="font-size:.8rem;color:#5f6368;" id="profileEmail"></p>
+            </div>
+        </div>
+
+        <h1 style="font-size:1.25rem;margin-bottom:6px;">Welcome</h1>
+        <p class="subtitle" style="margin-bottom:24px;">Enter your password to continue</p>
+
+        <div class="field-wrap">
+            <input type="password" id="passwordInput" placeholder=" " autocomplete="current-password" />
+            <label for="passwordInput">Enter your password</label>
+        </div>
+        <p class="error-msg" id="errorMsg">Wrong password. Try again or click "Forgot password".</p>
+
+        <div class="actions">
+            <a href="#" class="forgot-link">Forgot password?</a>
+            <button class="next-btn" id="signInBtn">Next</button>
+        </div>
+
+        <div class="footer" style="margin-top:32px;">
+            <a href="#">English (US)</a>
+            <span>
+                <a href="#">Help</a> &nbsp;·&nbsp;
+                <a href="#">Privacy</a> &nbsp;·&nbsp;
+                <a href="#">Terms</a>
+            </span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const CORRECT_PASSWORD = "password123"; // Demo password hint shown below field
+    let selectedAccount = null;
+
+    // Get role from opener's URL params if any
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get("role") || "employee";
+
+    // Account selection
+    document.querySelectorAll(".account-item").forEach(item => {
+        item.addEventListener("click", () => {
+            selectedAccount = {
+                name:  item.dataset.name,
+                email: item.dataset.email,
+                color: item.dataset.color
+            };
+            showPasswordStep();
+        });
+    });
+
+    document.getElementById("useAnotherAccount").addEventListener("click", () => {
+        // Prompt for custom email
+        const email = prompt("Enter your Google account email:");
+        if (email && email.includes("@")) {
+            selectedAccount = {
+                name:  email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+                email: email,
+                color: "#1a73e8"
+            };
+            showPasswordStep();
+        }
+    });
+
+    function showPasswordStep() {
+        document.getElementById("step-account").style.display = "none";
+        document.getElementById("step-password").style.display = "block";
+
+        document.getElementById("profileName").textContent = selectedAccount.name;
+        document.getElementById("profileEmail").textContent = selectedAccount.email;
+        document.getElementById("profileAvatar").textContent = selectedAccount.name[0].toUpperCase();
+        document.getElementById("profileAvatar").style.background = selectedAccount.color;
+
+        // Show hint
+        const hint = document.createElement("p");
+        hint.style.cssText = "font-size:.75rem;color:#5f6368;margin-top:-16px;margin-bottom:16px;";
+        hint.textContent = "Demo: type any password to continue";
+        document.getElementById("errorMsg").before(hint);
+
+        document.getElementById("passwordInput").focus();
+    }
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+        document.getElementById("step-password").style.display = "none";
+        document.getElementById("step-account").style.display = "block";
+        document.getElementById("errorMsg").classList.remove("show");
+        document.getElementById("passwordInput").value = "";
+    });
+
+    document.getElementById("passwordInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") signIn();
+    });
+
+    document.getElementById("signInBtn").addEventListener("click", signIn);
+
+    function signIn() {
+        const pw = document.getElementById("passwordInput").value;
+        if (!pw || pw.length < 1) {
+            document.getElementById("errorMsg").textContent = "Please enter a password.";
+            document.getElementById("errorMsg").classList.add("show");
+            return;
+        }
+
+        document.getElementById("errorMsg").classList.remove("show");
+
+        // Show loading overlay
+        document.getElementById("loadingOverlay").classList.add("show");
+
+        setTimeout(() => {
+            const userData = {
+                provider: "Google",
+                name: selectedAccount.name,
+                email: selectedAccount.email,
+                avatar: selectedAccount.name[0].toUpperCase(),
+                color: selectedAccount.color,
+                role: role
+            };
+
+            // Send back to parent via postMessage
+            if (window.opener) {
+                window.opener.postMessage({ type: "OAUTH_SUCCESS", provider: "Google", user: userData }, "*");
+                window.close();
+            }
+        }, 1800);
+    }
+</script>
+
+</body>
+</html>
