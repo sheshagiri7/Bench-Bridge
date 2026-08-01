@@ -709,6 +709,19 @@ function renderProfile(employee, skills, assessments = []) {
 
 /* ---------- 2. Assessments ---------- */
 
+/* Deduplicate assessments: keep latest entry per technology */
+function dedupeAssessments(list) {
+    if (!list || list.length === 0) return list || [];
+    const seen = new Map();
+    for (const item of list) {
+        const key = (item.technology || "").toLowerCase();
+        if (!seen.has(key) || (item.assessmentId || 0) > (seen.get(key).assessmentId || 0)) {
+            seen.set(key, item);
+        }
+    }
+    return Array.from(seen.values());
+}
+
 function renderAssessments(assessments) {
     const container = document.getElementById("assessmentsContainer");
 
@@ -1266,12 +1279,17 @@ async function loadDashboard() {
         const session = getAuthSession();
         const employeeId = (session && session.employee && session.employee.emplId) || DEFAULT_EMPLOYEE_ID;
 
-        const [employee, skills, assessments, projects] = await Promise.all([
+        const [employee, skills, rawAssessments, projects] = await Promise.all([
             API.getEmployee(employeeId),
             API.getSkills(employeeId),
             API.getAssessments(employeeId),
             API.getProjects()
         ]);
+
+        // Always deduplicate — keep only latest per technology
+        const assessments = dedupeAssessments(rawAssessments || []);
+        // Persist cleaned list back to localStorage
+        localStorage.setItem("bb_assessments", JSON.stringify(assessments));
 
         const currentEmployee = employee || (session ? session.employee : null);
         CURRENT_EMPLOYEE = currentEmployee;
@@ -1283,13 +1301,13 @@ async function loadDashboard() {
                 if (subtitle) subtitle.textContent = `Welcome back, ${firstName}. Here's your latest snapshot.`;
             }
             renderTopbar(currentEmployee);
-            renderProfile(currentEmployee, skills || [], assessments || []);
+            renderProfile(currentEmployee, skills || [], assessments);
             bindSkillTriggers();
         }
 
-        renderAssessments(assessments || []);
-        renderAnalysis(assessments || []);
-        renderProjects(projects || [], assessments || []);
+        renderAssessments(assessments);
+        renderAnalysis(assessments);
+        renderProjects(projects || [], assessments);
         renderMyProject(currentEmployee);
     } catch (error) {
         console.error("Failed to load dashboard:", error);
