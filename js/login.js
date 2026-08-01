@@ -67,7 +67,56 @@ document.addEventListener("DOMContentLoaded", () => {
         setupForgotPassword();
         setupRegisterLink();
         setupFormSubmission();
+        setupOAuthLogin();
 
+    }
+
+    /* ======================================================
+       OAUTH 2.0 SOCIAL LOGIN HANDLERS
+    ====================================================== */
+
+    function setupOAuthLogin() {
+        const googleBtn = document.getElementById("googleOAuthBtn");
+        const githubBtn = document.getElementById("githubOAuthBtn");
+
+        if (googleBtn) {
+            googleBtn.addEventListener("click", () => handleOAuth("Google"));
+        }
+        if (githubBtn) {
+            githubBtn.addEventListener("click", () => handleOAuth("GitHub"));
+        }
+    }
+
+    function handleOAuth(provider) {
+        startLoading();
+        // Simulate OAuth 2.0 token exchange and secure session establishment
+        setTimeout(() => {
+            const oauthUser = {
+                empId: "EMP-OAUTH-2026",
+                name: `${provider} Authenticated User`,
+                email: `user@${provider.toLowerCase()}.com`,
+                department: "Engineering",
+                experience: "4 Years",
+                role: currentRole
+            };
+
+            const session = {
+                token: `oauth2-${provider.toLowerCase()}-jwt-` + Date.now(),
+                employee: {
+                    emplId: 101,
+                    name: oauthUser.name,
+                    email: oauthUser.email,
+                    department: oauthUser.department,
+                    role: currentRole
+                }
+            };
+
+            sessionStorage.setItem("bb_session", JSON.stringify(session));
+            localStorage.setItem("benchbridge_session", JSON.stringify(oauthUser));
+
+            const targetPage = currentRole === "manager" ? "manager-dashboard.html" : "employee-dashboard.html";
+            window.location.replace(targetPage);
+        }, 1000);
     }
 
     /* ======================================================
