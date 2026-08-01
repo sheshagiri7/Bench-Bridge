@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Replace with your real GitHub OAuth App Client ID.
     // Create one at: https://github.com/settings/developers
     // Set Homepage URL and Callback URL to http://127.0.0.1:5500
-    const GITHUB_CLIENT_ID = "YOUR_GITHUB_CLIENT_ID";
+    const GITHUB_CLIENT_ID = "Ov23liNUXSK1qIvupRtI";
     // ──────────────────────────────────────────────────────────────────
 
     function setupOAuthLogin() {
