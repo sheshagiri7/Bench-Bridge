@@ -119,60 +119,37 @@
             return;
         }
 
-        // ── Exchange code for token via a CORS proxy ──────────────────────
-        // We use corsproxy.io to forward the request to GitHub's token endpoint.
-        // NOTE: For production, replace this with your own backend endpoint.
+        // ── Exchange code for token via our Netlify function ─────────────
+        // The function keeps GITHUB_CLIENT_SECRET safely on the server.
         updateStatus("Exchanging authorization code…", "Securing your session…");
 
-        let accessToken = null;
+        let ghUser = null;
         try {
-            const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(
-                "https://github.com/login/oauth/access_token"
-            );
-            const res = await fetch(proxyUrl, {
+            const fnUrl = window.location.origin + "/api/github-oauth";
+            const redirectUri = window.location.href.split("?")[0];
+
+            const res = await fetch(fnUrl, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                body: JSON.stringify({
-                    client_id:     "Ov23liNUXSK1qIvupRtI",
-                    // ⚠️  For a real production app, NEVER put the client_secret here.
-                    // Use a backend server. This is a demo only.
-                    client_secret: "", // Left blank — backend needed for full flow
-                    code:          code,
-                    redirect_uri:  window.location.href.split("?")[0]
-                })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code, redirectUri })
             });
 
             if (res.ok) {
                 const data = await res.json();
-                accessToken = data.access_token || null;
+                if (!data.error) ghUser = data;
             }
         } catch (fetchErr) {
-            console.warn("Token exchange fetch failed (expected without backend):", fetchErr);
+            console.warn("Netlify function call failed:", fetchErr);
         }
 
-        // ── Fetch GitHub user profile ─────────────────────────────────────
-        updateStatus("Loading your profile…", "Almost done!");
-
-        let ghUser = null;
-        if (accessToken) {
-            try {
-                const userRes = await fetch("https://api.github.com/user", {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
-                if (userRes.ok) ghUser = await userRes.json();
-            } catch (_) {}
-        }
 
         // Fallback: use what we can infer (GitHub username from code isn't possible,
         // so we set a placeholder that the user can update in their profile)
         const userData = {
-            name:   ghUser ? (ghUser.name || ghUser.login) : "GitHub User",
-            email:  ghUser ? (ghUser.email || ghUser.login + "@github.com") : "github-user@github.com",
-            avatar: ghUser ? (ghUser.name || ghUser.login || "G")[0].toUpperCase() : "G",
-            handle: ghUser ? ghUser.login : "github-user",
+            name:   ghUser ? (ghUser.name   || ghUser.login) : "GitHub User",
+            email:  ghUser ? (ghUser.email  || ghUser.login + "@github.com") : "github-user@github.com",
+            avatar: ghUser ? (ghUser.name   || ghUser.login || "G")[0].toUpperCase() : "G",
+            handle: ghUser ? ghUser.login   : "github-user",
             picture: ghUser ? ghUser.avatar_url : null
         };
 

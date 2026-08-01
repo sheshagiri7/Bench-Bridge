@@ -1,0 +1,18 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Route /api/* calls to Netlify functions for cleaner URLs
+[[redirects]]
+  from = "/api/github-oauth"
+  to   = "/.netlify/functions/github-oauth"
+  status = 200
+
+# SPA fallback — serve index from root for any unmatched paths
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+[functions]
+  node_bundler = "esbuild"
