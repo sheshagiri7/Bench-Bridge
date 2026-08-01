@@ -166,11 +166,25 @@ const API = {
             { headers: authHeaders() },
             async () => {
                 await delay(350);
-                const local = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
-                return local.length > 0 ? local : MOCK_ASSESSMENTS;
+                const raw = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
+                // Deduplicate: keep only the latest entry per technology
+                const seen = new Map();
+                for (const item of raw) {
+                    const key = item.technology;
+                    if (!seen.has(key) || item.assessmentId > seen.get(key).assessmentId) {
+                        seen.set(key, item);
+                    }
+                }
+                const deduped = Array.from(seen.values());
+                // Save the cleaned-up version back to localStorage
+                if (deduped.length !== raw.length) {
+                    localStorage.setItem("bb_assessments", JSON.stringify(deduped));
+                }
+                return deduped.length > 0 ? deduped : MOCK_ASSESSMENTS;
             }
         );
     },
+
 
     async getProjects() {
         return this.fetchWithFallback(

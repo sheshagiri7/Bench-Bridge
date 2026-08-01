@@ -1263,15 +1263,21 @@ async function showFinalResults(timedOut){
       body: JSON.stringify({ emplId: employeeId, skillName: track.name, skillLevels: skillLevel })
     });
 
-    // 3. Fallback/instant local save for dashboard
-    const localAssessments = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
-    localAssessments.unshift({ assessmentId: Date.now(), employeeId, technology: track.name, score: pct, date: today });
-    localStorage.setItem("bb_assessments", JSON.stringify(localAssessments));
+    // 3. Local save / upsert for dashboard (runs regardless of backend success)
   } catch (err) {
     console.warn("[BenchBridge] Backend update error:", err.message);
-    const skillLevel = pct >= 80 ? "Expert" : pct >= 60 ? "Intermediate" : "Beginner";
+  } finally {
+    // Upsert: update existing entry for same technology, or add new one
     const localAssessments = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
-    localAssessments.unshift({ assessmentId: Date.now(), employeeId, technology: track.name, score: pct, date: today });
+    const existingIdx = localAssessments.findIndex(
+      a => a.technology === track.name && a.employeeId === employeeId
+    );
+    const entry = { assessmentId: Date.now(), employeeId, technology: track.name, score: pct, date: today };
+    if (existingIdx !== -1) {
+      localAssessments[existingIdx] = entry; // update in place
+    } else {
+      localAssessments.unshift(entry);       // new technology, add to front
+    }
     localStorage.setItem("bb_assessments", JSON.stringify(localAssessments));
   }
 
