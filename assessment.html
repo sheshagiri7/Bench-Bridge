@@ -1241,7 +1241,13 @@ async function showFinalResults(timedOut){
     ? `Time's up — the ${track.name} track was auto-submitted.`
     : `You completed the ${track.name} track.`;
 
-  // Save assessment to Spring Boot backend database
+  // Save assessment to Spring Boot backend database (3-second timeout so we never get stuck)
+  const fetchWithTimeout = (url, opts, ms=3000) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
+  };
+
   try {
     const rawSession = sessionStorage.getItem("bb_session");
     const session = rawSession ? JSON.parse(rawSession) : null;
@@ -1249,7 +1255,7 @@ async function showFinalResults(timedOut){
     const today = new Date().toISOString().split("T")[0];
 
     // 1. Save assessment record
-    await fetch("http://localhost:8081/api/assessments", {
+    await fetchWithTimeout("http://localhost:8081/api/assessments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ employeeId, technology: track.name, score: pct, date: today })
@@ -1257,30 +1263,34 @@ async function showFinalResults(timedOut){
 
     // 2. Derive & save skill
     const skillLevel = pct >= 80 ? "Expert" : pct >= 60 ? "Intermediate" : "Beginner";
-    await fetch("http://localhost:8081/api/skills", {
+    await fetchWithTimeout("http://localhost:8081/api/skills", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ emplId: employeeId, skillName: track.name, skillLevels: skillLevel })
     });
 
-    // 3. Local save / upsert for dashboard (runs regardless of backend success)
   } catch (err) {
-    console.warn("[BenchBridge] Backend update error:", err.message);
+    console.warn("[BenchBridge] Backend update error (offline?):", err.message);
   } finally {
-    // Upsert: update existing entry for same technology, or add new one
+    // Upsert local copy regardless of backend status
+    const rawSession2 = sessionStorage.getItem("bb_session");
+    const session2 = rawSession2 ? JSON.parse(rawSession2) : null;
+    const employeeId2 = (session2 && session2.employee && session2.employee.emplId) ? session2.employee.emplId : 1;
+    const today2 = new Date().toISOString().split("T")[0];
     const localAssessments = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
     const existingIdx = localAssessments.findIndex(
-      a => a.technology === track.name && a.employeeId === employeeId
+      a => a.technology === track.name && a.employeeId === employeeId2
     );
-    const entry = { assessmentId: Date.now(), employeeId, technology: track.name, score: pct, date: today };
+    const entry = { assessmentId: Date.now(), employeeId: employeeId2, technology: track.name, score: pct, date: today2 };
     if (existingIdx !== -1) {
-      localAssessments[existingIdx] = entry; // update in place
+      localAssessments[existingIdx] = entry;
     } else {
-      localAssessments.unshift(entry);       // new technology, add to front
+      localAssessments.unshift(entry);
     }
     localStorage.setItem("bb_assessments", JSON.stringify(localAssessments));
   }
 
+  // Always show results screen — never blocked by backend
   document.getElementById('assessment').classList.remove('active');
   document.getElementById('resultsScreen').classList.add('active');
   document.getElementById('resultsScreen').style.display='flex';
