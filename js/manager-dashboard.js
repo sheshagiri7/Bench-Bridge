@@ -393,6 +393,11 @@ async function handleAllocation(matchId, newStatus, emplId) {
         const emp = STATE.employees.find(e => e.emplId === emplId);
         if (emp) emp.benchStatus = "Allocated";
 
+        // Remove any rejection entry if present
+        const rejections = JSON.parse(localStorage.getItem("bb_rejections") || "{}");
+        delete rejections[String(emplId)];
+        localStorage.setItem("bb_rejections", JSON.stringify(rejections));
+
         // Persist approval so the employee dashboard can read it
         const projectId = match ? match.projectId : null;
         const project = projectId ? STATE.projects.find(p => p.projectId === projectId) : null;
@@ -407,6 +412,27 @@ async function handleAllocation(matchId, newStatus, emplId) {
             matchScore: match ? match.matchScore : null
         };
         localStorage.setItem("bb_approvals", JSON.stringify(approvals));
+    } else if (newStatus === "Rejected") {
+        // Remove approval entry if present
+        const approvals = JSON.parse(localStorage.getItem("bb_approvals") || "{}");
+        delete approvals[String(emplId)];
+        localStorage.setItem("bb_approvals", JSON.stringify(approvals));
+
+        // Persist rejection so the employee dashboard can read it
+        const projectId = match ? match.projectId : null;
+        const project = projectId ? STATE.projects.find(p => p.projectId === projectId) : null;
+        const rejections = JSON.parse(localStorage.getItem("bb_rejections") || "{}");
+        rejections[String(emplId)] = {
+            rejectedAt: new Date().toISOString(),
+            projectId: projectId,
+            projectName: project ? project.projectName : (match ? match.projectName : "a project"),
+            domain: project ? project.domain : "",
+            requiredSkills: project ? project.requiredSkills : "",
+            openPosition: project ? project.openPosition : "",
+            matchScore: match ? match.matchScore : null,
+            reason: "Application was not selected by the manager."
+        };
+        localStorage.setItem("bb_rejections", JSON.stringify(rejections));
     }
 
     renderKPIs();

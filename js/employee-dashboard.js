@@ -166,21 +166,21 @@ const API = {
             { headers: authHeaders() },
             async () => {
                 await delay(350);
+                const session = getAuthSession();
+                const currentEmpId = (session && session.employee && session.employee.emplId) ? session.employee.emplId : employeeId;
                 const raw = JSON.parse(localStorage.getItem("bb_assessments") || "[]");
+                // Filter by logged in employee ID
+                const userAssessments = raw.filter(item => !item.employeeId || item.employeeId === currentEmpId);
                 // Deduplicate: keep only the latest entry per technology
                 const seen = new Map();
-                for (const item of raw) {
+                for (const item of userAssessments) {
                     const key = item.technology;
                     if (!seen.has(key) || item.assessmentId > seen.get(key).assessmentId) {
                         seen.set(key, item);
                     }
                 }
                 const deduped = Array.from(seen.values());
-                // Save the cleaned-up version back to localStorage
-                if (deduped.length !== raw.length) {
-                    localStorage.setItem("bb_assessments", JSON.stringify(deduped));
-                }
-                return deduped.length > 0 ? deduped : MOCK_ASSESSMENTS;
+                return deduped;
             }
         );
     },
@@ -518,11 +518,13 @@ function buildRecommendations(sorted) {
 ========================================================== */
 
 const SECTION_META = {
-    profile:     { title: "My Profile",            subtitle: "Welcome back, let's see how you're doing." },
-    assessments: { title: "Assessments",           subtitle: "Your recent technical assessment results." },
-    analysis:    { title: "Assessment Analysis",   subtitle: "Insights derived from your assessment results." },
-    projects:    { title: "Recommended Projects",  subtitle: "AI-matched projects based on your skills and scores." },
-    myproject:   { title: "My Project",            subtitle: "You have been approved and allocated to a project." }
+    profile:       { title: "My Profile",            subtitle: "Welcome back, let's see how you're doing." },
+    assessments:   { title: "Assessments",           subtitle: "Your recent technical assessment results." },
+    analysis:      { title: "Assessment Analysis",   subtitle: "Insights derived from your assessment results." },
+    projects:      { title: "Recommended Projects",  subtitle: "AI-matched projects based on enterprise resource-matching graph networks." },
+    feed:          { title: "Real-Time Status & Check-in Feed", subtitle: "Proactive AI updates and skill verification recommendations." },
+    customization: { title: "Customization Module",  subtitle: "Dynamic updates to targeted team applications and skill validation paths." },
+    myproject:     { title: "Project Status",        subtitle: "View your allocation requests, approval, or rejection status." }
 };
 
 function initNavigation() {
@@ -696,6 +698,14 @@ function renderProfile(employee, skills, assessments = []) {
                     <div class="profile-row">
                         <span class="label"><i class="fa-solid fa-briefcase"></i> Experience</span>
                         <span class="value">${employee.experiences || 1} years</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="label"><i class="fa-solid fa-clock"></i> Bench Duration</span>
+                        <span class="value">${employee.benchDuration || '18 Days on Bench'}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="label"><i class="fa-solid fa-bullseye"></i> Target Roles</span>
+                        <span class="value">${employee.targetRole || 'Senior Java Microservices Engineer / Full Stack Lead'}</span>
                     </div>
                 </div>
             </div>
@@ -1300,8 +1310,6 @@ async function loadDashboard() {
 
         // Always deduplicate — keep only latest per technology
         const assessments = dedupeAssessments(rawAssessments || []);
-        // Persist cleaned list back to localStorage
-        localStorage.setItem("bb_assessments", JSON.stringify(assessments));
 
         const currentEmployee = employee || (session ? session.employee : null);
         CURRENT_EMPLOYEE = currentEmployee;
@@ -1320,10 +1328,210 @@ async function loadDashboard() {
         renderAssessments(assessments);
         renderAnalysis(assessments);
         renderProjects(projects || [], assessments);
+        renderFeed(currentEmployee, assessments);
+        renderCustomization(currentEmployee, skills || []);
         renderMyProject(currentEmployee);
     } catch (error) {
         console.error("Failed to load dashboard:", error);
         showToast("Failed to load dashboard data.");
+    }
+}
+
+/* ==========================================================
+   REAL-TIME STATUS & CHECK-IN FEED
+   Delivers proactive updates with live action buttons
+========================================================== */
+
+function renderFeed(employee, assessments = []) {
+    const container = document.getElementById("feedContainer");
+    if (!container) return;
+
+    const hasJava = assessments.some(a => (a.technology || "").toLowerCase().includes("java"));
+    const hasPython = assessments.some(a => (a.technology || "").toLowerCase().includes("python"));
+    const hasDSA = assessments.some(a => (a.technology || "").toLowerCase().includes("dsa"));
+
+    const javaScore = (assessments.find(a => (a.technology || "").toLowerCase().includes("java")) || {}).score || 0;
+    const dsaScore = (assessments.find(a => (a.technology || "").toLowerCase().includes("dsa")) || {}).score || 0;
+
+    const feedItems = [
+        {
+            id: 1,
+            time: "10 mins ago",
+            icon: "fa-cloud-check",
+            color: "#06b6d4",
+            tag: "Verification Feed",
+            title: "Cloud & Microservices Certification Verified",
+            text: `I've verified your cloud & microservices progress! Your Java track is currently at ${hasJava ? javaScore + '%' : 'untested'}, but your System Design & DSA score needs improvement—should I schedule a mock assessment?`,
+            actions: [
+                { label: "Schedule Mock Assessment", primary: true, action: "schedule_mock" },
+                { label: "Dismiss", primary: false, action: "dismiss" }
+            ]
+        },
+        {
+            id: 2,
+            time: "1 hour ago",
+            icon: "fa-diagram-project",
+            color: "#3b82f6",
+            tag: "Graph Matcher",
+            title: "Enterprise Resource Graph Match Found",
+            text: "Enterprise resource-matching graph network identified a 96% structural match between your profile and the 'AI Banking Portal' FinTech initiative.",
+            actions: [
+                { label: "View Graph Connection", primary: true, action: "view_graph" }
+            ]
+        },
+        {
+            id: 3,
+            time: "Yesterday",
+            icon: "fa-bullseye",
+            color: "#8b5cf6",
+            tag: "Target Role Path",
+            title: "Skill Validation Milestone",
+            text: "Target role path set to 'Senior Microservices Lead'. Complete 1 advanced assessment to elevate your allocation match score by +12%.",
+            actions: [
+                { label: "Start Test", primary: true, action: "start_test" }
+            ]
+        }
+    ];
+
+    container.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:18px;">
+            ${feedItems.map(item => `
+                <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px 28px;position:relative;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:40px;height:40px;border-radius:10px;background:${item.color}22;border:1px solid ${item.color}55;color:${item.color};display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
+                                <i class="fa-solid ${item.icon}"></i>
+                            </div>
+                            <div>
+                                <span style="font-size:0.75rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:${item.color};">${item.tag}</span>
+                                <h3 style="font-size:1.05rem;color:#f8fafc;margin:2px 0 0 0;">${item.title}</h3>
+                            </div>
+                        </div>
+                        <span style="font-size:0.8rem;color:#64748b;"><i class="fa-regular fa-clock"></i> ${item.time}</span>
+                    </div>
+
+                    <p style="color:#cbd5e1;font-size:0.95rem;line-height:1.6;margin:0 0 18px 0;background:rgba(0,0,0,0.2);padding:14px 18px;border-radius:12px;border-left:3px solid ${item.color};">
+                        "${item.text}"
+                    </p>
+
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        ${item.actions.map(act => `
+                            <button type="button" class="${act.primary ? 'submit-btn' : 'ghost-btn'}" data-feed-action="${act.action}" style="width:auto;padding:8px 18px;font-size:0.85rem;margin:0;">
+                                ${act.label}
+                            </button>
+                        `).join("")}
+                    </div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+
+    container.querySelectorAll("[data-feed-action]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const act = btn.dataset.feedAction;
+            if (act === "schedule_mock" || act === "start_test") {
+                const modal = document.getElementById("assessmentModal");
+                if (modal) modal.classList.add("active");
+            } else if (act === "view_graph") {
+                showToast("Opening Enterprise Resource Matching Graph...");
+            } else {
+                btn.closest("div[style*='background']").style.opacity = "0.5";
+                showToast("Notification updated.");
+            }
+        });
+    });
+}
+
+/* ==========================================================
+   CUSTOMIZATION MODULE
+   Dynamic targeted team applications & skill validation paths
+========================================================== */
+
+function renderCustomization(employee, skills = []) {
+    const container = document.getElementById("customizationContainer");
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="grid grid-2" style="gap:24px;">
+            <!-- Targeted Team Application Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="fa-solid fa-bullseye"></i></div>
+                    <div>
+                        <h3>Targeted Team Applications</h3>
+                        <p>Configure dynamic matching parameters for your profile</p>
+                    </div>
+                </div>
+
+                <form id="customTargetForm" style="margin-top:16px;display:flex;flex-direction:column;gap:16px;">
+                    <div class="form-group">
+                        <label style="color:#cbd5e1;font-size:0.85rem;margin-bottom:6px;display:block;">Primary Target Role</label>
+                        <select id="targetRoleSelect" class="glass-select" style="width:100%;padding:10px;border-radius:10px;">
+                            <option value="Java Microservices Lead">Java Microservices Lead</option>
+                            <option value="Full Stack Cloud Engineer" selected>Full Stack Cloud Engineer</option>
+                            <option value="Data & Analytics Specialist">Data & Analytics Specialist</option>
+                            <option value="DevOps & Kubernetes Architect">DevOps & Kubernetes Architect</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="color:#cbd5e1;font-size:0.85rem;margin-bottom:6px;display:block;">Preferred Domain Track</label>
+                        <select id="targetDomainSelect" class="glass-select" style="width:100%;padding:10px;border-radius:10px;">
+                            <option value="FinTech">FinTech / Banking</option>
+                            <option value="Cloud Infrastructure" selected>Cloud Infrastructure</option>
+                            <option value="HealthTech">HealthTech</option>
+                            <option value="Data & Analytics">Data & Analytics</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn" style="margin-top:8px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Update Target Profile
+                    </button>
+                </form>
+            </div>
+
+            <!-- Skill Validation Paths -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="fa-solid fa-route"></i></div>
+                    <div>
+                        <h3>Skill Validation Paths</h3>
+                        <p>Customize automated verification sequences</p>
+                    </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+                    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);padding:14px;border-radius:12px;display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <strong style="color:#f8fafc;font-size:0.9rem;">Core Backend Path</strong>
+                            <p style="color:#94a3b8;font-size:0.8rem;margin:2px 0 0 0;">Java → Spring Boot → Microservices</p>
+                        </div>
+                        <span class="status-tag passed">Active</span>
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);padding:14px;border-radius:12px;display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <strong style="color:#f8fafc;font-size:0.9rem;">Algorithms & System Design Path</strong>
+                            <p style="color:#94a3b8;font-size:0.8rem;margin:2px 0 0 0;">DSA → Dynamic Programming → Distributed Systems</p>
+                        </div>
+                        <span class="status-tag failed" style="background:rgba(245,158,11,0.15);color:#fbbf24;border-color:rgba(245,158,11,0.3);">In Progress</span>
+                    </div>
+
+                    <button type="button" class="ghost-btn" onclick="showToast('New validation path configured!')" style="margin-top:8px;">
+                        <i class="fa-solid fa-plus"></i> Add Custom Validation Path
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const form = document.getElementById("customTargetForm");
+    if (form) {
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const role = document.getElementById("targetRoleSelect").value;
+            showToast(`Updated target role to '${role}'!`);
+        });
     }
 }
 
@@ -1338,89 +1546,168 @@ function renderMyProject(employee) {
 
     const emplId = employee ? String(employee.emplId || employee.empId || "") : "";
     const approvals = JSON.parse(localStorage.getItem("bb_approvals") || "{}");
+    const rejections = JSON.parse(localStorage.getItem("bb_rejections") || "{}");
 
-    // Try matching by emplId or by checking any stored approval
-    const approval = approvals[emplId] || null;
+    const approval = approvals[emplId] || approvals[DEFAULT_EMPLOYEE_ID] || null;
+    const rejection = rejections[emplId] || rejections[DEFAULT_EMPLOYEE_ID] || null;
 
-    if (!approval) {
-        // No approval yet — hide nav item and show pending message
-        if (navBtn) navBtn.style.display = "none";
+    if (!approval && !rejection) {
+        // No decision yet — hide nav item or set default text
+        if (navBtn) {
+            navBtn.style.display = "none";
+        }
         container.innerHTML = `
             <div style="text-align:center;padding:64px 24px;">
                 <i class="fa-solid fa-hourglass-half" style="font-size:3.5rem;color:#f59e0b;margin-bottom:20px;"></i>
-                <h2 style="color:#f8fafc;font-size:1.5rem;margin-bottom:10px;">No Project Assigned Yet</h2>
+                <h2 style="color:#f8fafc;font-size:1.5rem;margin-bottom:10px;">No Decision Yet</h2>
                 <p style="color:#94a3b8;max-width:420px;margin:0 auto;line-height:1.7;">
-                    Your application is under review. Once a manager approves your request, your project details will appear here automatically.
+                    Your project allocation application is under review by management. Your approval or rejection status will be updated here.
                 </p>
             </div>
         `;
         return;
     }
 
-    // Approval exists — show the nav item with a pulsing dot
+    // Always show nav button if there is an approval or rejection
     if (navBtn) {
         navBtn.style.display = "flex";
-        navBtn.innerHTML = `
-            <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>
-            <span>My Project</span>
-            <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;margin-left:auto;animation:pulse 1.5s infinite;"></span>
+        if (approval) {
+            navBtn.innerHTML = `
+                <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>
+                <span>My Project</span>
+                <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;margin-left:auto;animation:pulse 1.5s infinite;"></span>
+            `;
+        } else {
+            navBtn.innerHTML = `
+                <i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i>
+                <span>Project Status</span>
+                <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:auto;"></span>
+            `;
+        }
+    }
+
+    let cardsHtml = "";
+
+    // 1. Render Approved Section if present
+    if (approval) {
+        const approvedDate = new Date(approval.approvedAt).toLocaleDateString("en-US", {
+            weekday: "long", year: "numeric", month: "long", day: "numeric"
+        });
+        const skills = (approval.requiredSkills || "").split(",").map(s => s.trim()).filter(Boolean);
+        const skillPills = skills.length
+            ? skills.map(s => `<span class="skill-tag" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#a5b4fc;">${s}</span>`).join("")
+            : `<span style="color:#94a3b8;">Not specified</span>`;
+
+        cardsHtml += `
+            <!-- Approval Banner & Details -->
+            <div style="margin-bottom:32px;">
+                <div style="background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(16,185,129,0.06));border:1px solid rgba(34,197,94,0.3);border-radius:20px;padding:32px 36px;margin-bottom:24px;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(34,197,94,0.15),transparent 70%);pointer-events:none;"></div>
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                        <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">
+                            <i class="fa-solid fa-circle-check" style="color:#fff;"></i>
+                        </div>
+                        <div>
+                            <h2 style="color:#22c55e;font-size:1.4rem;margin:0 0 4px;">🎉 You've Been Approved!</h2>
+                            <p style="color:#86efac;margin:0;font-size:0.9rem;">Approved on ${approvedDate}</p>
+                        </div>
+                    </div>
+                    <p style="color:#d1fae5;font-size:1rem;margin:0;line-height:1.7;">
+                        Congratulations! Your manager has reviewed your profile and approved your allocation to a new project. Welcome aboard!
+                    </p>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px 32px;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+                        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;">
+                            <i class="fa-solid fa-briefcase" style="color:#fff;"></i>
+                        </div>
+                        <div>
+                            <h3 style="color:#f8fafc;font-size:1.25rem;margin:0 0 2px;">${approval.projectName || 'Project Assignment'}</h3>
+                            ${approval.domain ? `<span style="color:#94a3b8;font-size:0.85rem;">${approval.domain}</span>` : ""}
+                        </div>
+                        ${approval.matchScore ? `<span style="margin-left:auto;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);border-radius:20px;padding:6px 14px;color:#a5b4fc;font-size:0.85rem;font-weight:600;"><i class="fa-solid fa-bolt"></i> ${approval.matchScore}% Match</span>` : ""}
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+                        <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:16px 20px;">
+                            <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;">Status</p>
+                            <p style="color:#22c55e;font-weight:600;margin:0;font-size:0.95rem;"><i class="fa-solid fa-circle" style="font-size:0.6rem;vertical-align:middle;"></i> Allocated</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:16px 20px;">
+                            <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;">Open Positions</p>
+                            <p style="color:#f8fafc;font-weight:600;margin:0;font-size:0.95rem;">${approval.openPosition || '—'}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px;">Required Skills</p>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">${skillPills}</div>
+                    </div>
+                </div>
+            </div>
         `;
     }
 
-    const approvedDate = new Date(approval.approvedAt).toLocaleDateString("en-US", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric"
-    });
-    const skills = (approval.requiredSkills || "").split(",").map(s => s.trim()).filter(Boolean);
-    const skillPills = skills.length
-        ? skills.map(s => `<span class="skill-tag" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#a5b4fc;">${s}</span>`).join("")
-        : `<span style="color:#94a3b8;">Not specified</span>`;
+    // 2. Render Rejected Section if present
+    if (rejection) {
+        const rejectedDate = new Date(rejection.rejectedAt).toLocaleDateString("en-US", {
+            weekday: "long", year: "numeric", month: "long", day: "numeric"
+        });
+        const skills = (rejection.requiredSkills || "").split(",").map(s => s.trim()).filter(Boolean);
+        const skillPills = skills.length
+            ? skills.map(s => `<span class="skill-tag" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;">${s}</span>`).join("")
+            : `<span style="color:#94a3b8;">Not specified</span>`;
 
-    container.innerHTML = `
-        <!-- Approval Banner -->
-        <div style="background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(16,185,129,0.06));border:1px solid rgba(34,197,94,0.3);border-radius:20px;padding:32px 36px;margin-bottom:28px;position:relative;overflow:hidden;">
-            <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(34,197,94,0.15),transparent 70%);pointer-events:none;"></div>
-            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-                <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">
-                    <i class="fa-solid fa-circle-check" style="color:#fff;"></i>
-                </div>
-                <div>
-                    <h2 style="color:#22c55e;font-size:1.4rem;margin:0 0 4px;">🎉 You've Been Approved!</h2>
-                    <p style="color:#86efac;margin:0;font-size:0.9rem;">Approved on ${approvedDate}</p>
-                </div>
-            </div>
-            <p style="color:#d1fae5;font-size:1rem;margin:0;line-height:1.7;">
-                Congratulations! Your manager has reviewed your profile and approved your allocation to a new project. Welcome aboard!
-            </p>
-        </div>
-
-        <!-- Project Details Card -->
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px 32px;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
-                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;">
-                    <i class="fa-solid fa-briefcase" style="color:#fff;"></i>
-                </div>
-                <div>
-                    <h3 style="color:#f8fafc;font-size:1.25rem;margin:0 0 2px;">${approval.projectName || 'Project Assignment'}</h3>
-                    ${approval.domain ? `<span style="color:#94a3b8;font-size:0.85rem;">${approval.domain}</span>` : ""}
-                </div>
-                ${approval.matchScore ? `<span style="margin-left:auto;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);border-radius:20px;padding:6px 14px;color:#a5b4fc;font-size:0.85rem;font-weight:600;"><i class="fa-solid fa-bolt"></i> ${approval.matchScore}% Match</span>` : ""}
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
-                <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:16px 20px;">
-                    <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;">Status</p>
-                    <p style="color:#22c55e;font-weight:600;margin:0;font-size:0.95rem;"><i class="fa-solid fa-circle" style="font-size:0.6rem;vertical-align:middle;"></i> Allocated</p>
-                </div>
-                <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:16px 20px;">
-                    <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;">Open Positions</p>
-                    <p style="color:#f8fafc;font-weight:600;margin:0;font-size:0.95rem;">${approval.openPosition || '—'}</p>
-                </div>
-            </div>
-
+        cardsHtml += `
+            <!-- Rejection Banner & Details -->
             <div>
-                <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px;">Required Skills</p>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;">${skillPills}</div>
+                <div style="background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(225,29,72,0.06));border:1px solid rgba(239,68,68,0.3);border-radius:20px;padding:32px 36px;margin-bottom:24px;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(239,68,68,0.15),transparent 70%);pointer-events:none;"></div>
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                        <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">
+                            <i class="fa-solid fa-circle-xmark" style="color:#fff;"></i>
+                        </div>
+                        <div>
+                            <h2 style="color:#ef4444;font-size:1.4rem;margin:0 0 4px;">Application Not Selected</h2>
+                            <p style="color:#fca5a5;margin:0;font-size:0.9rem;">Reviewed on ${rejectedDate}</p>
+                        </div>
+                    </div>
+                    <p style="color:#fecdd3;font-size:1rem;margin:0;line-height:1.7;">
+                        Your application for <strong>${rejection.projectName || 'the project'}</strong> was reviewed by management and has been rejected at this time. You remain active on the bench and can apply for other suitable project opportunities.
+                    </p>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px 32px;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+                        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#f43f5e);display:flex;align-items:center;justify-content:center;">
+                            <i class="fa-solid fa-file-excel" style="color:#fff;"></i>
+                        </div>
+                        <div>
+                            <h3 style="color:#f8fafc;font-size:1.25rem;margin:0 0 2px;">${rejection.projectName || 'Project Application'}</h3>
+                            ${rejection.domain ? `<span style="color:#94a3b8;font-size:0.85rem;">${rejection.domain}</span>` : ""}
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+                        <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:16px 20px;">
+                            <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;">Status</p>
+                            <p style="color:#ef4444;font-weight:600;margin:0;font-size:0.95rem;"><i class="fa-solid fa-circle" style="font-size:0.6rem;vertical-align:middle;"></i> Rejected</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:16px 20px;">
+                            <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;">Reason / Note</p>
+                            <p style="color:#f8fafc;font-weight:500;margin:0;font-size:0.9rem;">${rejection.reason || 'Not selected for this allocation.'}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p style="color:#64748b;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px;">Required Skills</p>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">${skillPills}</div>
+                    </div>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
+
+    container.innerHTML = cardsHtml;
 }

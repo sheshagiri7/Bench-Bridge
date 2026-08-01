@@ -59,6 +59,16 @@
                 <span>Recommended Projects</span>
             </button>
 
+            <button class="nav-item" data-section="feed">
+                <i class="fa-solid fa-comments"></i>
+                <span>Check-in Feed</span>
+            </button>
+
+            <button class="nav-item" data-section="customization">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Customization Module</span>
+            </button>
+
             <button class="nav-item" data-section="myproject" id="myProjectNavBtn" style="display:none;">
                 <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>
                 <span>My Project</span>
@@ -151,11 +161,37 @@
                 <div class="section-header">
                     <div>
                         <h2>Recommended Projects</h2>
-                        <p>AI-matched projects based on your skills and scores.</p>
+                        <p>AI-matched projects based on graph networks & skill data.</p>
                     </div>
                 </div>
                 <div id="projectsContainer">
                     <div class="placeholder-text">Matching projects…</div>
+                </div>
+            </section>
+
+            <!-- ========== REAL-TIME STATUS & CHECK-IN FEED ========== -->
+            <section class="dashboard-section" id="section-feed">
+                <div class="section-header">
+                    <div>
+                        <h2>Real-Time Status & Check-in Feed</h2>
+                        <p>Proactive AI updates and skill verification recommendations.</p>
+                    </div>
+                </div>
+                <div id="feedContainer">
+                    <div class="placeholder-text">Loading check-in feed…</div>
+                </div>
+            </section>
+
+            <!-- ========== CUSTOMIZATION MODULE ========== -->
+            <section class="dashboard-section" id="section-customization">
+                <div class="section-header">
+                    <div>
+                        <h2>Customization Module</h2>
+                        <p>Configure dynamic target applications and custom skill validation paths.</p>
+                    </div>
+                </div>
+                <div id="customizationContainer">
+                    <div class="placeholder-text">Loading customization options…</div>
                 </div>
             </section>
 
